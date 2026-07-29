@@ -6,11 +6,22 @@ class GeoResourceAction extends _$GeoResourceAction {
   void build() {}
 
   Future<void> updateAllGeoResources() async {
-    await Future.wait(GeoResource.values.map(updateGeoResource));
+    await _applyProfileBeforeUpdate();
+    await Future.wait(
+      GeoResource.values.map(
+        (geoResource) => coreController.updateGeoData(geoResource.name),
+      ),
+    );
   }
 
   Future<void> updateGeoResource(GeoResource geoResource) async {
+    await _applyProfileBeforeUpdate();
     await coreController.updateGeoData(geoResource.name);
+  }
+
+  Future<void> _applyProfileBeforeUpdate() async {
+    debouncer.cancel(FunctionTag.applyProfile);
+    await ref.read(setupActionProvider.notifier).applyProfile(silence: true);
   }
 
   void updateGeoResourceUrl(GeoResource geoResource, String newUrl) {
