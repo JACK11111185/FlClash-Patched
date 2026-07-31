@@ -44,10 +44,11 @@ jobs:
           git -C core/mihomo remote -v
 
           echo "===== Verify X365 source markers ====="
+
           grep -nF 'x365Suffix' \
             core/mihomo/transport/vless/vless.go
 
-          grep -n 'invalid x365 response header' \
+          grep -nF 'invalid x365 response header' \
             core/mihomo/transport/vless/conn.go
 
           grep -nF 'buffer.Write(vc.id.Bytes())' \
@@ -71,6 +72,8 @@ jobs:
       - name: Setup Xcode
         shell: bash
         run: |
+          set -euo pipefail
+
           sudo xcode-select -s /Applications/Xcode_26.3.app \
             || sudo xcode-select -s /Applications/Xcode_26.2.app
 
@@ -127,10 +130,15 @@ jobs:
             exit 1
           fi
 
-          grep -n 'x365Suffix = "#x365"' \
+          echo "===== Verify X365 source markers after build ====="
+
+          grep -nF 'x365Suffix' \
             core/mihomo/transport/vless/vless.go
 
-          grep -n 'invalid x365 response header' \
+          grep -nF 'invalid x365 response header' \
+            core/mihomo/transport/vless/conn.go
+
+          grep -nF 'buffer.Write(vc.id.Bytes())' \
             core/mihomo/transport/vless/conn.go
 
           echo "Post-build Mihomo verification passed"
@@ -158,15 +166,22 @@ jobs:
           unzip -q "$IPA" -d "$CHECK_DIR"
 
           echo "===== Applications in IPA ====="
-          find "$CHECK_DIR/Payload" -maxdepth 2 -type d -name '*.app' -print
+          find "$CHECK_DIR/Payload" \
+            -maxdepth 2 \
+            -type d \
+            -name '*.app' \
+            -print
 
           echo "===== Extensions in IPA ====="
-          find "$CHECK_DIR/Payload" -type d -name '*.appex' -print || true
+          find "$CHECK_DIR/Payload" \
+            -type d \
+            -name '*.appex' \
+            -print || true
 
-          echo "===== Searching compiled binaries for X365 marker ====="
+          echo "===== Searching compiled IPA for X365 marker ====="
 
           MATCHES="$(
-            grep -R -a -l \
+            grep -R -a -l -F \
               'invalid x365 response header' \
               "$CHECK_DIR/Payload" 2>/dev/null || true
           )"
