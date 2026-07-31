@@ -19,6 +19,42 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      - name: Verify custom Mihomo source
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "===== FlClash commit ====="
+          git rev-parse HEAD
+
+          echo "===== Mihomo commit recorded by FlClash ====="
+          EXPECTED_COMMIT="$(git ls-tree HEAD core/mihomo | awk '{print $3}')"
+          echo "$EXPECTED_COMMIT"
+
+          echo "===== Actual Mihomo commit ====="
+          ACTUAL_COMMIT="$(git -C core/mihomo rev-parse HEAD)"
+          echo "$ACTUAL_COMMIT"
+
+          if [ "$EXPECTED_COMMIT" != "$ACTUAL_COMMIT" ]; then
+            echo "ERROR: Mihomo checkout does not match the FlClash submodule pointer"
+            exit 1
+          fi
+
+          echo "===== Mihomo remotes ====="
+          git -C core/mihomo remote -v
+
+          echo "===== Verify X365 source markers ====="
+          grep -n 'x365Suffix = "#x365"' \
+            core/mihomo/transport/vless/vless.go
+
+          grep -n 'invalid x365 response header' \
+            core/mihomo/transport/vless/conn.go
+
+          grep -n "buffer.Write(vc.id.Bytes())" \
+            core/mihomo/transport/vless/conn.go
+
+          echo "X365 source verification passed"
+
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
@@ -57,9 +93,92 @@ jobs:
       - name: Get Flutter dependencies
         run: flutter pub get
 
-      - name: Build iOS without signing
+      - name: Test custom Mihomo changes
+        shell: bash
+        working-directory: core/mihomo
         run: |
+          set -euo pipefail
+
+          go test ./transport/vless
+          go vet ./transport/vless
+          go test ./adapter/outbound
+          go test .
+          go vet .
+
+      - name: Build iOS without signing
+        shell: bash
+        run: |
+          set -euo pipefail
           dart setup.dart ios --env stable --no-codesign -v
+
+      - name: Verify Mihomo source after build
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          EXPECTED_COMMIT="$(git ls-tree HEAD core/mihomo | awk '{print $3}')"
+          ACTUAL_COMMIT="$(git -C core/mihomo rev-parse HEAD)"
+
+          echo "Expected Mihomo commit: $EXPECTED_COMMIT"
+          echo "Actual Mihomo commit:   $ACTUAL_COMMIT"
+
+          if [ "$EXPECTED_COMMIT" != "$ACTUAL_COMMIT" ]; then
+            echo "ERROR: The build script changed the Mihomo submodule commit"
+            exit 1
+          fi
+
+          grep -n 'x365Suffix = "#x365"' \
+            core/mihomo/transport/vless/vless.go
+
+          grep -n 'invalid x365 response header' \
+            core/mihomo/transport/vless/conn.go
+
+          echo "Post-build Mihomo verification passed"
+
+      - name: Verify X365 code in IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          IPA="$(find dist -type f -name '*.ipa' | head -n 1)"
+
+          if [ -z "$IPA" ]; then
+            echo "ERROR: IPA file was not found in dist"
+            find dist -maxdepth 5 -type f -print 2>/dev/null || true
+            exit 1
+          fi
+
+          echo "===== IPA being checked ====="
+          echo "$IPA"
+
+          CHECK_DIR="$RUNNER_TEMP/x365-ipa-check"
+          rm -rf "$CHECK_DIR"
+          mkdir -p "$CHECK_DIR"
+
+          unzip -q "$IPA" -d "$CHECK_DIR"
+
+          echo "===== Applications in IPA ====="
+          find "$CHECK_DIR/Payload" -maxdepth 2 -type d -name '*.app' -print
+
+          echo "===== Extensions in IPA ====="
+          find "$CHECK_DIR/Payload" -type d -name '*.appex' -print || true
+
+          echo "===== Searching compiled binaries for X365 marker ====="
+
+          MATCHES="$(
+            grep -R -a -l \
+              'invalid x365 response header' \
+              "$CHECK_DIR/Payload" 2>/dev/null || true
+          )"
+
+          if [ -z "$MATCHES" ]; then
+            echo "ERROR: X365 marker was not found in the compiled IPA"
+            echo "The IPA may contain an unmodified Mihomo core"
+            exit 1
+          fi
+
+          echo "$MATCHES"
+          echo "X365 code was found in the compiled IPA"
 
       - name: Show build results
         if: always()
@@ -69,12 +188,17 @@ jobs:
           find dist -maxdepth 5 -type f -print 2>/dev/null || true
 
           echo "===== iOS build directory ====="
-          find build/ios -maxdepth 5 -type f -print 2>/dev/null | head -300 || true
+          find build/ios -maxdepth 5 -type f -print 2>/dev/null \
+            | head -300 || true
+
+          echo "===== Current Mihomo commit ====="
+          git -C core/mihomo rev-parse HEAD 2>/dev/null || true
 
       - name: Upload iOS artifact
         uses: actions/upload-artifact@v7
         with:
-          name: flclash-ios-unsigned
+          name: flclash-ios-x365-unsigned
           path: ./dist
           if-no-files-found: error
           overwrite: true
+          retention-days: 3
