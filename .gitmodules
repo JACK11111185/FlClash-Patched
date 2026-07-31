@@ -1,4 +1,4 @@
 [submodule "core/mihomo"]
 	path = core/mihomo
 	url = https://github.com/llyufeng/mihomo.git
-	branch = FlClash
+	branch = custom-vless
