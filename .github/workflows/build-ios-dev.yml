@@ -1,0 +1,80 @@
+name: Build iOS Dev
+
+on:
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: "3.44.8"
+
+jobs:
+  build-ios:
+    name: Build unsigned iOS
+    runs-on: macos-26
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.26.5"
+          cache-dependency-path: core/go.sum
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: master
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Setup Xcode
+        shell: bash
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.3.app \
+            || sudo xcode-select -s /Applications/Xcode_26.2.app
+
+          echo "===== Xcode ====="
+          xcodebuild -version
+
+          echo "===== iOS SDK ====="
+          xcrun --sdk iphoneos --show-sdk-version
+
+          echo "===== Flutter ====="
+          flutter --version
+
+          echo "===== Go ====="
+          go version
+
+          echo "===== Rust ====="
+          rustc --version
+          cargo --version
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      - name: Build iOS without signing
+        run: |
+          dart setup.dart ios --env stable --no-codesign -v
+
+      - name: Show build results
+        if: always()
+        shell: bash
+        run: |
+          echo "===== dist directory ====="
+          find dist -maxdepth 5 -type f -print 2>/dev/null || true
+
+          echo "===== iOS build directory ====="
+          find build/ios -maxdepth 5 -type f -print 2>/dev/null | head -300 || true
+
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: flclash-ios-unsigned
+          path: ./dist
+          if-no-files-found: error
+          overwrite: true
