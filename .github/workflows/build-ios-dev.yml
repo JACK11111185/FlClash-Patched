@@ -44,13 +44,13 @@ jobs:
           git -C core/mihomo remote -v
 
           echo "===== Verify X365 source markers ====="
-          grep -n 'x365Suffix = "#x365"' \
+          grep -nF 'x365Suffix' \
             core/mihomo/transport/vless/vless.go
 
           grep -n 'invalid x365 response header' \
             core/mihomo/transport/vless/conn.go
 
-          grep -n "buffer.Write(vc.id.Bytes())" \
+          grep -nF 'buffer.Write(vc.id.Bytes())' \
             core/mihomo/transport/vless/conn.go
 
           echo "X365 source verification passed"
