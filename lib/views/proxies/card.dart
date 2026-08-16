@@ -92,7 +92,7 @@ class ProxyCard extends StatelessWidget {
     }
   }
 
-  Future<void> _changeProxy(WidgetRef ref) async {
+  Future<void> _changeProxy(BuildContext context) async {
     final isComputedSelected = groupType.isComputedSelected;
     final isSelector = groupType == GroupType.Selector;
     final ref = globalState.container;
@@ -110,7 +110,7 @@ class ProxyCard extends StatelessWidget {
           .changeProxyDebounce(groupName, nextProxyName);
       return;
     }
-    globalState.showNotifier(currentAppLocalizations.notSelectedTip);
+    context.showSnackBar(currentAppLocalizations.notSelectedTip);
   }
 
   @override
@@ -129,7 +129,7 @@ class ProxyCard extends StatelessWidget {
               key: key,
               onLongPress: _handleTestCurrentDelay,
               onPressed: () {
-                _changeProxy(ref);
+                _changeProxy(context);
               },
               isSelected: selectedProxyName == proxy.name,
               child: child!,

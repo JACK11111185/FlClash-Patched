@@ -142,7 +142,7 @@ class ProviderItem extends StatelessWidget {
       return true;
     }, title: appLocalizations.tip);
     if (res == true && context.mounted) {
-      context.showNotifier(appLocalizations.exportSuccess);
+      context.showSnackBar(appLocalizations.exportSuccess);
     }
   }
 

@@ -350,9 +350,7 @@ class LogItem extends StatelessWidget {
           PopupMenuItemData(
             icon: Icons.copy,
             label: appLocalizations.copy,
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: log.payload));
-            },
+            onPressed: () => copyText(context, log.payload),
           ),
         ],
       ),

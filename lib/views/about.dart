@@ -112,7 +112,7 @@ class AboutView extends StatelessWidget {
                     ref
                         .read(appSettingProvider.notifier)
                         .update((state) => state.copyWith(developerMode: true));
-                    context.showNotifier(
+                    context.showSnackBar(
                       appLocalizations.developerModeEnableTip,
                     );
                   },

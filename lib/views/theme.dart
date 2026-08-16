@@ -233,7 +233,7 @@ class _PrimaryColorItemState extends ConsumerState<_PrimaryColorItem> {
       themeSettingProvider.select((state) => state.primaryColors.contains(res)),
     );
     if (isExists && mounted) {
-      context.showNotifier(
+      context.showSnackBar(
         appLocalizations.existsTip(appLocalizations.colorSchemes),
       );
       return;
