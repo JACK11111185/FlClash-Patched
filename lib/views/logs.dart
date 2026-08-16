@@ -32,7 +32,7 @@ class _LogsViewState extends ConsumerState<LogsView> {
     globalState.isBackground.addListener(_syncListening);
     _syncListening();
     _logs = ref.read(logsProvider).list;
-    _scrollController = ScrollController(initialScrollOffset: double.maxFinite);
+    _scrollController = ReverseScrollController();
     _logsStateNotifier.value = _logsStateNotifier.value.copyWith(logs: _logs);
     ref.listenManual(logsProvider.select((state) => VM(state.list)), (
       prev,

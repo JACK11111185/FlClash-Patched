@@ -69,7 +69,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
     globalState.isBackground.addListener(_syncListening);
     _syncListening();
     _requests = ref.read(requestsProvider).list;
-    _scrollController = ScrollController(initialScrollOffset: double.maxFinite);
+    _scrollController = ReverseScrollController();
     _requestsStateNotifier.value = _requestsStateNotifier.value.copyWith(
       trackerInfos: _requests,
     );
