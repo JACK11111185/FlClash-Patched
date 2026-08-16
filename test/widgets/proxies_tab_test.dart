@@ -37,8 +37,12 @@ void main() {
     coreHandler = _MockCoreHandlerInterface();
     CoreController.resetInstance();
     CoreController.test(coreHandler);
-    when(() => coreHandler.changeProxy(any())).thenAnswer((_) async => '');
-    when(() => coreHandler.closeConnections()).thenAnswer((_) async => true);
+    when(
+      () => coreHandler.changeProxy(
+        any(),
+        closeConnections: any(named: 'closeConnections'),
+      ),
+    ).thenAnswer((_) async => '');
     when(
       () => coreHandler.getProxies(),
     ).thenAnswer((_) async => _proxiesData());
@@ -125,8 +129,10 @@ void main() {
     verify(
       () => coreHandler.changeProxy(
         const ChangeProxyParams(groupName: 'B', proxyName: ''),
+        closeConnections: true,
       ),
     ).called(1);
+    verifyNever(() => coreHandler.closeConnections());
     verify(() => coreHandler.getProxies()).called(1);
   });
 
@@ -160,8 +166,10 @@ void main() {
     verify(
       () => coreHandler.changeProxy(
         const ChangeProxyParams(groupName: 'A', proxyName: ''),
+        closeConnections: true,
       ),
     ).called(1);
+    verifyNever(() => coreHandler.closeConnections());
     verify(() => coreHandler.getProxies()).called(1);
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(milliseconds: 1));

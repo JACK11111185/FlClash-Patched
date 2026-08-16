@@ -39,7 +39,10 @@ mixin CoreInterface {
 
   Future<ProxiesData> getProxies();
 
-  Future<String> changeProxy(ChangeProxyParams changeProxyParams);
+  Future<String> changeProxy(
+    ChangeProxyParams changeProxyParams, {
+    bool closeConnections = false,
+  });
 
   Future<bool> startListener();
 
@@ -229,10 +232,17 @@ abstract class CoreHandlerInterface with CoreInterface {
   }
 
   @override
-  Future<String> changeProxy(ChangeProxyParams changeProxyParams) async {
+  Future<String> changeProxy(
+    ChangeProxyParams changeProxyParams, {
+    bool closeConnections = false,
+  }) async {
+    final arguments = {
+      ...changeProxyParams.toJson(),
+      'close-connections': closeConnections,
+    };
     return await _invokeMethod<String>(
           method: CoreMethod.changeProxy,
-          arguments: changeProxyParams.toJson(),
+          arguments: arguments,
         ) ??
         '';
   }

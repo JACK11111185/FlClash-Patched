@@ -257,12 +257,8 @@ class ProxiesAction extends _$ProxiesAction {
   }) async {
     await coreController.changeProxy(
       ChangeProxyParams(groupName: groupName, proxyName: proxyName),
+      closeConnections: ref.read(appSettingProvider).closeConnections,
     );
-    if (ref.read(appSettingProvider).closeConnections) {
-      await coreController.closeConnections();
-    } else {
-      await coreController.resetConnections();
-    }
     ref.read(checkIpNumProvider.notifier).add();
   }
 

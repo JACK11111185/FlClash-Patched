@@ -200,6 +200,16 @@ func handleChangeProxy(params *ChangeProxyParams, fn func(string string)) {
 			fn("Group is not selectable")
 			return
 		}
+		proxyGroup, ok := adapterProxy.ProxyAdapter.(outboundgroup.ProxyGroup)
+		if !ok {
+			fn("Group has invalid proxy type")
+			return
+		}
+		previousProxyName := proxyGroup.Now()
+		connectionIDs := []string(nil)
+		if params.CloseConnections {
+			connectionIDs = connectionIDsUsingGroup(groupName)
+		}
 		if proxyName == "" {
 			selector.ForceSet(proxyName)
 		} else {
@@ -208,6 +218,13 @@ func handleChangeProxy(params *ChangeProxyParams, fn func(string string)) {
 				fn(err.Error())
 				return
 			}
+		}
+		if params.CloseConnections {
+			if previousProxyName != proxyGroup.Now() {
+				closeConnectionsByID(connectionIDs)
+			}
+		} else {
+			resolver.ResetConnection()
 		}
 
 		fn("")
@@ -294,6 +311,34 @@ func closeConnections() {
 		_ = c.Close()
 		return true
 	})
+}
+
+func connectionIDsUsingGroup(groupName string) []string {
+	connectionIDs := []string{}
+	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
+		if chainUsesGroup(c.Info().Chain, groupName) {
+			connectionIDs = append(connectionIDs, c.ID())
+		}
+		return true
+	})
+	return connectionIDs
+}
+
+func closeConnectionsByID(connectionIDs []string) {
+	for _, connectionID := range connectionIDs {
+		if connection := statistic.DefaultManager.Get(connectionID); connection != nil {
+			_ = connection.Close()
+		}
+	}
+}
+
+func chainUsesGroup(chain constant.Chain, groupName string) bool {
+	for _, proxyName := range chain {
+		if proxyName == groupName {
+			return true
+		}
+	}
+	return false
 }
 
 func handleResetConnections() bool {
