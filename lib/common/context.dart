@@ -42,10 +42,13 @@ extension BuildContextExtension on BuildContext {
     );
   }
 
-  void showSnackBar(String message, {SnackBarAction? action}) {
-    ScaffoldMessenger.of(this).showSnackBar(
+  void showSnackBar(String message, {SnackBarAction? action, bool? persist}) {
+    final messager = ScaffoldMessenger.of(this);
+    messager.removeCurrentSnackBar();
+    messager.showSnackBar(
       SnackBar(
         action: action,
+        persist: persist,
         content: Text(message),
         behavior: SnackBarBehavior.fixed,
         duration: const Duration(milliseconds: 1500),

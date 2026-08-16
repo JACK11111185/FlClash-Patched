@@ -28,6 +28,28 @@ class CloseConnectionsItem extends ConsumerWidget {
   }
 }
 
+class PromptCloseConnectionsItem extends ConsumerWidget {
+  const PromptCloseConnectionsItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
+    final promptCloseConnections = ref.watch(
+      appSettingProvider.select((state) => state.promptCloseConnections),
+    );
+    return ListItem.toggle(
+      title: Text(appLocalizations.promptCloseConnections),
+      subtitle: Text(appLocalizations.promptCloseConnectionsDesc),
+      value: promptCloseConnections,
+      onChanged: (value) async {
+        ref
+            .read(appSettingProvider.notifier)
+            .update((state) => state.copyWith(promptCloseConnections: value));
+      },
+    );
+  }
+}
+
 class UsageItem extends ConsumerWidget {
   const UsageItem({super.key});
 
@@ -520,6 +542,9 @@ class ApplicationSettingView extends ConsumerWidget {
     final showHighPriorityAutoLaunch =
         system.isWindows &&
         ref.watch(appSettingProvider.select((state) => state.autoLaunch));
+    final closeConnections = ref.watch(
+      appSettingProvider.select((state) => state.closeConnections),
+    );
     final List<Widget> items = [
       const MinimizeItem(),
       if (system.isDesktop) ...[
@@ -534,6 +559,7 @@ class ApplicationSettingView extends ConsumerWidget {
       const OpenLogsItem(),
       const ForegroundTickerIntervalItem(),
       const CloseConnectionsItem(),
+      if (!closeConnections) const PromptCloseConnectionsItem(),
       const UsageItem(),
       if (system.isAndroid || system.isMacOS)
         const NetworkSpeedNotificationItem(),

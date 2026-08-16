@@ -129,6 +129,21 @@ void main() {
     verify(
       () => coreHandler.changeProxy(
         const ChangeProxyParams(groupName: 'B', proxyName: ''),
+        closeConnections: false,
+      ),
+    ).called(1);
+    expect(
+      find.text('Close connections using the previous proxy?'),
+      findsOneWidget,
+    );
+
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.tap(find.text('Close'));
+    await tester.pump();
+
+    verify(
+      () => coreHandler.changeProxy(
+        const ChangeProxyParams(groupName: 'B', proxyName: ''),
         closeConnections: true,
       ),
     ).called(1);
@@ -166,13 +181,76 @@ void main() {
     verify(
       () => coreHandler.changeProxy(
         const ChangeProxyParams(groupName: 'A', proxyName: ''),
-        closeConnections: true,
+        closeConnections: false,
       ),
     ).called(1);
+    expect(
+      find.text('Close connections using the previous proxy?'),
+      findsOneWidget,
+    );
+    expect(tester.widget<SnackBar>(find.byType(SnackBar)).persist, false);
+    verifyNever(
+      () => coreHandler.changeProxy(
+        const ChangeProxyParams(groupName: 'A', proxyName: ''),
+        closeConnections: true,
+      ),
+    );
     verifyNever(() => coreHandler.closeConnections());
     verify(() => coreHandler.getProxies()).called(1);
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(milliseconds: 1));
+  });
+
+  testWidgets('disabled connection prompt does not show a snackbar', (
+    tester,
+  ) async {
+    final appSettingSubscription = globalContainer.listen(
+      appSettingProvider,
+      (_, _) {},
+    );
+    addTearDown(appSettingSubscription.close);
+    globalContainer
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(promptCloseConnections: false));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          proxiesListStateProvider.overrideWithValue(
+            ProxiesListState(
+              groups: [_group('A')],
+              currentUnfoldSet: {},
+              proxyCardType: ProxyCardType.standard,
+            ),
+          ),
+          currentProfileProvider.overrideWithValue(
+            globalContainer.read(currentProfileProvider),
+          ),
+        ],
+        child: const _TestApp(child: ProxiesListView()),
+      ),
+    );
+    await tester.pump();
+
+    await tester.longPress(find.byKey(const Key('A')).first);
+    await _pumpUntilSelectionReset(tester, globalContainer, 'A');
+
+    verify(
+      () => coreHandler.changeProxy(
+        const ChangeProxyParams(groupName: 'A', proxyName: ''),
+        closeConnections: false,
+      ),
+    ).called(1);
+    expect(
+      find.text('Close connections using the previous proxy?'),
+      findsNothing,
+    );
+    verifyNever(
+      () => coreHandler.changeProxy(
+        const ChangeProxyParams(groupName: 'A', proxyName: ''),
+        closeConnections: true,
+      ),
+    );
   });
 
   testWidgets('list delay test deduplicates nodes shared by expanded groups', (

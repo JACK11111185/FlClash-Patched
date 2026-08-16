@@ -255,11 +255,37 @@ class ProxiesAction extends _$ProxiesAction {
     required String groupName,
     required String proxyName,
   }) async {
-    await coreController.changeProxy(
-      ChangeProxyParams(groupName: groupName, proxyName: proxyName),
-      closeConnections: ref.read(appSettingProvider).closeConnections,
+    final appSetting = ref.read(appSettingProvider);
+    final closeConnections = appSetting.closeConnections;
+    final params = ChangeProxyParams(
+      groupName: groupName,
+      proxyName: proxyName,
     );
+    await coreController.changeProxy(
+      params,
+      closeConnections: closeConnections,
+    );
+    if (!closeConnections && appSetting.promptCloseConnections) {
+      _showCloseConnectionsSnackBar(params);
+    }
     ref.read(checkIpNumProvider.notifier).add();
+  }
+
+  void _showCloseConnectionsSnackBar(ChangeProxyParams params) {
+    final context = globalState.navigatorKey.currentContext;
+    if (context == null || !context.mounted) {
+      return;
+    }
+    context.showSnackBar(
+      currentAppLocalizations.closeConnectionsPrompt,
+      persist: false,
+      action: SnackBarAction(
+        label: MaterialLocalizations.of(context).closeButtonTooltip,
+        onPressed: () async {
+          await coreController.changeProxy(params, closeConnections: true);
+        },
+      ),
+    );
   }
 
   Future<String> updateProvider(

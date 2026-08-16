@@ -103,7 +103,8 @@ void main() {
       expect(restored.silentLaunch, false);
       expect(restored.autoRun, false);
       expect(restored.openLogs, false);
-      expect(restored.closeConnections, true);
+      expect(restored.closeConnections, false);
+      expect(restored.promptCloseConnections, true);
       expect(restored.isAnimateToPage, true);
       expect(restored.isSwipeToPage, true);
       expect(restored.autoCheckUpdate, true);
@@ -132,6 +133,7 @@ void main() {
         autoLaunch: true,
         highPriorityAutoLaunch: true,
         closeConnections: false,
+        promptCloseConnections: false,
         isSwipeToPage: false,
         ignoreCertificateErrors: true,
         testUrl: 'https://custom.test',
@@ -150,6 +152,7 @@ void main() {
       expect(restored.autoLaunch, true);
       expect(restored.highPriorityAutoLaunch, true);
       expect(restored.closeConnections, false);
+      expect(restored.promptCloseConnections, false);
       expect(restored.isSwipeToPage, false);
       expect(restored.ignoreCertificateErrors, true);
       expect(restored.testUrl, 'https://custom.test');

@@ -203,6 +203,8 @@ List<String> _allMessages(AppLocalizations appLocalizations) {
     appLocalizations.externalLink,
     appLocalizations.autoCloseConnections,
     appLocalizations.autoCloseConnectionsDesc,
+    appLocalizations.promptCloseConnections,
+    appLocalizations.promptCloseConnectionsDesc,
     appLocalizations.onlyStatisticsProxy,
     appLocalizations.onlyStatisticsProxyDesc,
     appLocalizations.pureBlackMode,

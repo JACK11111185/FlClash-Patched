@@ -185,6 +185,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "clipboardExport": MessageLookupByLibrary.simpleMessage("导出剪贴板"),
     "clipboardImport": MessageLookupByLibrary.simpleMessage("剪贴板导入"),
     "closeAll": MessageLookupByLibrary.simpleMessage("断开全部"),
+    "closeConnectionsPrompt": MessageLookupByLibrary.simpleMessage(
+      "是否关闭使用原代理的连接？",
+    ),
     "collapse": MessageLookupByLibrary.simpleMessage("折叠"),
     "color": MessageLookupByLibrary.simpleMessage("颜色"),
     "colorSchemes": MessageLookupByLibrary.simpleMessage("配色方案"),
@@ -597,6 +600,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "profiles": MessageLookupByLibrary.simpleMessage("配置"),
     "profilesSort": MessageLookupByLibrary.simpleMessage("配置排序"),
     "project": MessageLookupByLibrary.simpleMessage("项目"),
+    "promptCloseConnections": MessageLookupByLibrary.simpleMessage("关闭连接提示"),
+    "promptCloseConnectionsDesc": MessageLookupByLibrary.simpleMessage(
+      "切换节点后询问是否关闭连接",
+    ),
     "providers": MessageLookupByLibrary.simpleMessage("提供者"),
     "proxies": MessageLookupByLibrary.simpleMessage("代理"),
     "proxiesEmpty": MessageLookupByLibrary.simpleMessage("代理为空"),
