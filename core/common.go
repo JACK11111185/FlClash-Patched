@@ -74,6 +74,7 @@ func toExternalProvider(p cp.Provider) (*ExternalProvider, error) {
 		return &ExternalProvider{
 			Name:        rsp.Name(),
 			Type:        rsp.Type().String(),
+			Format:      rsp.Format().String(),
 			VehicleType: rsp.VehicleType().String(),
 			Count:       rsp.Count(),
 			UpdateAt:    rsp.UpdatedAt(),

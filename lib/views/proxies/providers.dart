@@ -115,12 +115,12 @@ class ProviderItem extends StatelessWidget {
   }
 
   Future<void> _handlePreview(BuildContext context) async {
-    if (provider.path == null) return;
+    if (provider.path == null || !provider.canEditAsText) return;
     BaseNavigator.push<String>(context, ProviderEditorView(provider: provider));
   }
 
   Future<void> _handleEdit(BuildContext context) async {
-    if (provider.path == null) return;
+    if (provider.path == null || !provider.canEditAsText) return;
     BaseNavigator.push<String>(
       context,
       ProviderEditorView(provider: provider, editable: true),
@@ -158,6 +158,7 @@ class ProviderItem extends StatelessWidget {
   Widget _buildPopupMenu(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     final hasFile = provider.path != null;
+    final canEditAsText = hasFile && provider.canEditAsText;
     return CommonPopupMenu(
       items: [
         if (provider.vehicleType == 'HTTP')
@@ -169,7 +170,7 @@ class ProviderItem extends StatelessWidget {
         PopupMenuItemData(
           icon: Icons.visibility_outlined,
           label: appLocalizations.preview,
-          onPressed: hasFile
+          onPressed: canEditAsText
               ? () {
                   _handlePreview(context);
                 }
@@ -178,7 +179,7 @@ class ProviderItem extends StatelessWidget {
         PopupMenuItemData(
           icon: Icons.edit_outlined,
           label: appLocalizations.edit,
-          onPressed: hasFile
+          onPressed: canEditAsText
               ? () {
                   _handleEdit(context);
                 }
