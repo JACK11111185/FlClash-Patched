@@ -51,6 +51,16 @@ void main() {
       expect(results.rest, ['ios']);
     });
 
+    test('parses dependency installation opt-out', () {
+      final results = setup.createSetupArgParser().parse([
+        'linux',
+        '--skip-dependencies',
+      ]);
+
+      expect(results['skip-dependencies'], isTrue);
+      expect(results.rest, ['linux']);
+    });
+
     test('derives no-sign signing targets from their names', () {
       final targets = setup.createIOSNoSignSigningTargets(
         rootDir: p.join('workspace', 'flclash'),
