@@ -241,6 +241,43 @@ func handleMethodCall(call *MethodCall, response MethodResponse) {
 		}
 		response.success(handleGetExternalProvider(externalProviderName))
 		return
+	case getOverlayNetworkStatusMethod:
+		params := GetOverlayNetworkStatusParams{}
+		if !decodeMethodArguments(call, response, &params) {
+			return
+		}
+		response.success(handleGetOverlayNetworkStatus(&params))
+		return
+	case activateOverlayNetworkMethod:
+		params := ActivateOverlayNetworkParams{}
+		if !decodeMethodArguments(call, response, &params) {
+			return
+		}
+		response.success(handleActivateOverlayNetwork(&params))
+		return
+	case pingTailscaleNodeMethod:
+		params := TailscalePingParams{}
+		if !decodeMethodArguments(call, response, &params) {
+			return
+		}
+		result, err := handlePingTailscaleNode(&params)
+		if err != nil {
+			response.failure("core_error", err.Error(), nil)
+			return
+		}
+		response.success(result)
+		return
+	case logoutTailscaleMethod:
+		params := TailscaleLogoutParams{}
+		if !decodeMethodArguments(call, response, &params) {
+			return
+		}
+		if err := handleLogoutTailscale(&params); err != nil {
+			response.failure("core_error", err.Error(), nil)
+			return
+		}
+		response.success(true)
+		return
 	case updateGeoDataMethod:
 		geoType := ""
 		if !decodeMethodArguments(call, response, &geoType) {

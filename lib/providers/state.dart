@@ -55,11 +55,24 @@ NavigationItemsState navigationItemsState(Ref ref) {
   final hasProxies = ref.watch(
     currentGroupsStateProvider.select((state) => state.value.isNotEmpty),
   );
+  final hasNetworking = ref.watch(
+    groupsProvider.select(
+      (state) => state.any(
+        (group) => group.all.any(
+          (proxy) => const {
+            'tailscale',
+            'zerotier',
+          }.contains(proxy.type.toLowerCase()),
+        ),
+      ),
+    ),
+  );
   final isInit = ref.watch(initProvider);
   return NavigationItemsState(
     value: navigation.getItems(
       openLogs: openLogs,
       hasProxies: !isInit ? hasProfiles : hasProxies,
+      hasNetworking: hasNetworking,
     ),
   );
 }
