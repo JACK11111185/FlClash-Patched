@@ -298,7 +298,7 @@ void main() {
     expect(container.read(proxyStateProvider).isStart, isFalse);
   });
 
-  test('native VPN options track only restart-relevant settings', () {
+  test('native VPN options track only restart-relevant settings', () async {
     final changes = <VpnOptions?>[];
     final subscription = container.listen(
       vpnOptionsProvider,
@@ -308,9 +308,8 @@ void main() {
 
     container
         .read(vpnSettingProvider.notifier)
-        .update(
-          (state) => state.copyWith(networkSpeedNotification: true),
-        );
+        .update((state) => state.copyWith(networkSpeedNotification: true));
+    await container.pump();
     expect(changes, isEmpty);
 
     container
@@ -325,6 +324,7 @@ void main() {
             ),
           ),
         );
+    await container.pump();
     expect(changes, hasLength(1));
     expect(changes.single?.port, 8899);
     expect(changes.single?.mtu, 1500);
@@ -339,6 +339,7 @@ void main() {
             routeMode: RouteMode.bypassPrivate,
           ),
         );
+    await container.pump();
     expect(changes, hasLength(2));
     expect(changes.last?.bypassDomain, ['localhost']);
     expect(changes.last?.routeAddress, defaultBypassPrivateRouteAddress);
