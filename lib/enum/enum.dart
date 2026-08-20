@@ -290,7 +290,8 @@ enum DashboardWidget {
   ),
   intranetIp(GridItem(crossAxisCellCount: 4, child: IntranetIP())),
   memoryInfo(GridItem(crossAxisCellCount: 4, child: MemoryInfo())),
-  goroutineInfo(GridItem(crossAxisCellCount: 4, child: GoroutineInfo()));
+  goroutineInfo(GridItem(crossAxisCellCount: 4, child: GoroutineInfo())),
+  connectionInfo(GridItem(crossAxisCellCount: 4, child: ConnectionInfo()));
 
   final GridItem widget;
   final List<SupportPlatform> platforms;

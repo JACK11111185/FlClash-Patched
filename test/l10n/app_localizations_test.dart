@@ -179,6 +179,7 @@ List<String> _allMessages(AppLocalizations appLocalizations) {
     appLocalizations.infiniteTime,
     appLocalizations.connections,
     appLocalizations.connectionsDesc,
+    appLocalizations.connectionInfo,
     appLocalizations.intranetIP,
     appLocalizations.view,
     appLocalizations.cut,

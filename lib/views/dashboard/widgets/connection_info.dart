@@ -6,39 +6,48 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
-final _goroutineCountNotifier = ValueNotifier<int>(0);
+class ConnectionInfo extends StatefulWidget {
+  final Future<int> Function()? connectionCountReader;
 
-class GoroutineInfo extends StatefulWidget {
-  const GoroutineInfo({super.key});
+  const ConnectionInfo({
+    super.key,
+    @visibleForTesting this.connectionCountReader,
+  });
 
   @override
-  State<GoroutineInfo> createState() => _GoroutineInfoState();
+  State<ConnectionInfo> createState() => _ConnectionInfoState();
 }
 
-class _GoroutineInfoState extends State<GoroutineInfo> {
+class _ConnectionInfoState extends State<ConnectionInfo> {
+  final _connectionCountNotifier = ValueNotifier<int>(0);
+
   @override
   void initState() {
     super.initState();
-    foregroundTicker.register(this, _updateGoroutineCount, fire: true);
+    foregroundTicker.register(this, _updateConnectionCount, fire: true);
   }
 
   @override
   void dispose() {
     foregroundTicker.unregister(this);
+    _connectionCountNotifier.dispose();
     super.dispose();
   }
 
-  Future<void> _updateGoroutineCount() async {
-    final coreConnected =
-        globalState.container.read(coreStatusProvider) == CoreStatus.connected;
-    if (!coreConnected) {
+  Future<void> _updateConnectionCount() async {
+    final connectionCountReader = widget.connectionCountReader;
+    if (connectionCountReader == null &&
+        globalState.container.read(coreStatusProvider) !=
+            CoreStatus.connected) {
       return;
     }
-    final count = await coreController.getGoroutineCount();
+    final count = connectionCountReader != null
+        ? await connectionCountReader()
+        : (await coreController.getConnections()).length;
     if (!mounted) {
       return;
     }
-    _goroutineCountNotifier.value = count;
+    _connectionCountNotifier.value = count;
   }
 
   @override
@@ -50,8 +59,8 @@ class _GoroutineInfoState extends State<GoroutineInfo> {
         child: CommonCard(
           onPressed: () {},
           info: Info(
-            iconData: Icons.account_tree_outlined,
-            label: appLocalizations.goroutineInfo,
+            iconData: Icons.link,
+            label: appLocalizations.connectionInfo,
           ),
           child: Container(
             padding: baseInfoEdgeInsets.copyWith(top: 0),
@@ -63,7 +72,7 @@ class _GoroutineInfoState extends State<GoroutineInfo> {
                 SizedBox(
                   height: globalState.measure.bodyMediumHeight + 2,
                   child: ValueListenableBuilder(
-                    valueListenable: _goroutineCountNotifier,
+                    valueListenable: _connectionCountNotifier,
                     builder: (_, count, _) {
                       return Row(
                         mainAxisAlignment: MainAxisAlignment.start,
