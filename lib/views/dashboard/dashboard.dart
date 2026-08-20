@@ -213,7 +213,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                 child: LayoutBuilder(
                   builder: (_, constraints) {
                     final columns = min(
-                      max(4 * ((constraints.maxWidth / 280).ceil()), 8),
+                      max(4 * ((constraints.maxWidth / 280).floor() + 1), 8),
                       _maxCrossAxisCount,
                     );
                     return isEdit
