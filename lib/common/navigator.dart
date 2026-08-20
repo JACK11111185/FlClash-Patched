@@ -1,15 +1,8 @@
 import 'package:animations/animations.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 
 class BaseNavigator {
   static Future<T?> push<T>(BuildContext context, Widget child) async {
-    if (!globalState.container.read(isMobileViewProvider)) {
-      return Navigator.of(
-        context,
-      ).push<T>(CommonDesktopRoute(builder: (context) => child));
-    }
     return Navigator.of(
       context,
     ).push<T>(CommonRoute(builder: (context) => child));
@@ -21,39 +14,28 @@ const commonSharedXPageTransitions = SharedAxisPageTransitionsBuilder(
   fillColor: Colors.transparent,
 );
 
-class CommonDesktopRoute<T> extends PageRoute<T> {
-  final Widget Function(BuildContext context) builder;
+const commonDesktopFadePageTransitions =
+    CommonDesktopFadePageTransitionsBuilder();
 
-  CommonDesktopRoute({required this.builder});
-
-  @override
-  Color? get barrierColor => null;
-
-  @override
-  String? get barrierLabel => null;
-
-  @override
-  Widget buildPage(
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-  ) {
-    final Widget result = builder(context);
-    return Semantics(
-      scopesRoute: true,
-      explicitChildNodes: true,
-      child: FadeTransition(opacity: animation, child: result),
-    );
-  }
-
-  @override
-  bool get maintainState => true;
+class CommonDesktopFadePageTransitionsBuilder extends PageTransitionsBuilder {
+  const CommonDesktopFadePageTransitionsBuilder();
 
   @override
   Duration get transitionDuration => const Duration(milliseconds: 150);
 
   @override
   Duration get reverseTransitionDuration => const Duration(milliseconds: 100);
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return FadeTransition(opacity: animation, child: child);
+  }
 }
 
 class CommonRoute<T> extends MaterialPageRoute<T> {
