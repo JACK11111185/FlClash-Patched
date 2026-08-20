@@ -179,6 +179,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "cacheCorrupt": MessageLookupByLibrary.simpleMessage("缓存已损坏，是否清空？"),
     "cancel": MessageLookupByLibrary.simpleMessage("取消"),
     "cancelSelectAll": MessageLookupByLibrary.simpleMessage("取消全选"),
+    "captureDns": MessageLookupByLibrary.simpleMessage("接管系统 DNS"),
+    "captureDnsDesc": MessageLookupByLibrary.simpleMessage(
+      "将所有系统 DNS 查询导入内部 DNS 模块",
+    ),
     "checkUpdate": MessageLookupByLibrary.simpleMessage("检查更新"),
     "checkUpdateError": MessageLookupByLibrary.simpleMessage("当前应用已经是最新版了"),
     "clear": MessageLookupByLibrary.simpleMessage("清除"),
@@ -262,7 +266,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "disconnected": MessageLookupByLibrary.simpleMessage("已断开"),
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage("发现新版本"),
     "dnsDesc": MessageLookupByLibrary.simpleMessage("更新 DNS 相关设置"),
-    "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNS 劫持"),
+    "dnsHijack": MessageLookupByLibrary.simpleMessage("DNS 劫持"),
+    "dnsHijackDesc": MessageLookupByLibrary.simpleMessage(
+      "将 DNS 请求导入内部 DNS 模块",
+    ),
     "dnsIPv6Desc": MessageLookupByLibrary.simpleMessage("关闭后，AAAA 查询将返回空结果"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNS 模式"),
     "doYouWantToPass": MessageLookupByLibrary.simpleMessage("是否要通过"),
@@ -279,6 +286,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "emptyTip": m4,
     "en": MessageLookupByLibrary.simpleMessage("英语"),
     "enableExternalController": MessageLookupByLibrary.simpleMessage("启用外部控制器"),
+    "endpointIndependentNat": MessageLookupByLibrary.simpleMessage("NAT 增强"),
+    "endpointIndependentNatDesc": MessageLookupByLibrary.simpleMessage(
+      "优化 UDP 和 P2P 应用的连接体验",
+    ),
     "endpoints": MessageLookupByLibrary.simpleMessage("端点"),
     "enforceRoutes": MessageLookupByLibrary.simpleMessage("强制路由"),
     "enforceRoutesDesc": MessageLookupByLibrary.simpleMessage(
@@ -404,6 +415,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("小时"),
     "hoursAgo": m10,
     "hoursCount": m11,
+    "icmpForwarding": MessageLookupByLibrary.simpleMessage("ICMP 转发"),
+    "icmpForwardingDesc": MessageLookupByLibrary.simpleMessage(
+      "开启后支持 ICMP Ping",
+    ),
     "icon": MessageLookupByLibrary.simpleMessage("图片"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("图标记录"),
     "iconSource": MessageLookupByLibrary.simpleMessage("图标来源"),
@@ -831,6 +846,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "stop": MessageLookupByLibrary.simpleMessage("暂停"),
     "stopVpn": MessageLookupByLibrary.simpleMessage("正在停止 VPN..."),
     "stopped": MessageLookupByLibrary.simpleMessage("已停止"),
+    "strictRoute": MessageLookupByLibrary.simpleMessage("严格路由"),
+    "strictRouteDesc": MessageLookupByLibrary.simpleMessage("使用 TUN 严格路由模式"),
     "style": MessageLookupByLibrary.simpleMessage("风格"),
     "styleSettings": MessageLookupByLibrary.simpleMessage("样式设置"),
     "subRule": MessageLookupByLibrary.simpleMessage("子规则"),

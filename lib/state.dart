@@ -48,7 +48,7 @@ class GlobalState {
   // ignore: deprecated_member_use
   CorePalette? corePalette;
   String? lastConfigMd5;
-  VpnState? lastVpnState;
+  VpnOptions? lastVpnOptions;
   bool isAttach = false;
 
   GlobalState._internal();

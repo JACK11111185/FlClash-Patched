@@ -14,14 +14,14 @@ import (
 	"strings"
 )
 
-func Start(fd int, stack string, address, dns string, mtu uint32) *sing_tun.Listener {
+func Start(fd int, config Options) *sing_tun.Listener {
 	var prefix4 []netip.Prefix
 	var prefix6 []netip.Prefix
-	tunStack, ok := constant.StackTypeMapping[strings.ToLower(stack)]
+	tunStack, ok := constant.StackTypeMapping[strings.ToLower(config.Stack)]
 	if !ok {
 		tunStack = constant.TunSystem
 	}
-	for _, a := range strings.Split(address, ",") {
+	for _, a := range strings.Split(config.Address, ",") {
 		a = strings.TrimSpace(a)
 		if len(a) == 0 {
 			continue
@@ -39,7 +39,7 @@ func Start(fd int, stack string, address, dns string, mtu uint32) *sing_tun.List
 	}
 
 	var dnsHijack []string
-	for _, d := range strings.Split(dns, ",") {
+	for _, d := range strings.Split(config.DNS, ",") {
 		d = strings.TrimSpace(d)
 		if len(d) == 0 {
 			continue
@@ -48,16 +48,18 @@ func Start(fd int, stack string, address, dns string, mtu uint32) *sing_tun.List
 	}
 
 	options := LC.Tun{
-		Enable:              true,
-		Device:              "FlClash",
-		Stack:               tunStack,
-		DNSHijack:           dnsHijack,
-		AutoRoute:           false,
-		AutoDetectInterface: false,
-		Inet4Address:        prefix4,
-		Inet6Address:        prefix6,
-		MTU:                 mtu,
-		FileDescriptor:      fd,
+		Enable:                 true,
+		Device:                 "FlClash",
+		Stack:                  tunStack,
+		DNSHijack:              dnsHijack,
+		AutoRoute:              false,
+		AutoDetectInterface:    false,
+		Inet4Address:           prefix4,
+		Inet6Address:           prefix6,
+		MTU:                    config.MTU,
+		FileDescriptor:         fd,
+		DisableICMPForwarding:  config.DisableICMPForwarding,
+		EndpointIndependentNat: config.EndpointIndependentNAT,
 	}
 
 	listener, err := sing_tun.New(options, tunnel.Tunnel)

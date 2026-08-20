@@ -195,6 +195,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "cancel": MessageLookupByLibrary.simpleMessage("キャンセル"),
     "cancelSelectAll": MessageLookupByLibrary.simpleMessage("全選択解除"),
+    "captureDns": MessageLookupByLibrary.simpleMessage("システム DNS を引き継ぐ"),
+    "captureDnsDesc": MessageLookupByLibrary.simpleMessage(
+      "すべてのシステム DNS クエリを内部 DNS モジュールに転送",
+    ),
     "checkUpdate": MessageLookupByLibrary.simpleMessage("更新を確認"),
     "checkUpdateError": MessageLookupByLibrary.simpleMessage("アプリは最新版です"),
     "clear": MessageLookupByLibrary.simpleMessage("クリア"),
@@ -296,7 +300,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "disconnected": MessageLookupByLibrary.simpleMessage("切断済み"),
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage("新バージョンを発見"),
     "dnsDesc": MessageLookupByLibrary.simpleMessage("DNS 関連設定の更新"),
-    "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNS ハイジャッキング"),
+    "dnsHijack": MessageLookupByLibrary.simpleMessage("DNS ハイジャック"),
+    "dnsHijackDesc": MessageLookupByLibrary.simpleMessage(
+      "DNS クエリを内部 DNS モジュールに転送",
+    ),
     "dnsIPv6Desc": MessageLookupByLibrary.simpleMessage(
       "無効にすると、AAAA クエリは空の結果を返します",
     ),
@@ -316,6 +323,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "en": MessageLookupByLibrary.simpleMessage("英語"),
     "enableExternalController": MessageLookupByLibrary.simpleMessage(
       "外部コントローラーを有効にする",
+    ),
+    "endpointIndependentNat": MessageLookupByLibrary.simpleMessage("NAT 強化"),
+    "endpointIndependentNatDesc": MessageLookupByLibrary.simpleMessage(
+      "UDP および P2P アプリの接続を最適化",
     ),
     "endpoints": MessageLookupByLibrary.simpleMessage("エンドポイント"),
     "enforceRoutes": MessageLookupByLibrary.simpleMessage("ルートを強制"),
@@ -456,6 +467,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("時間"),
     "hoursAgo": m10,
     "hoursCount": m11,
+    "icmpForwarding": MessageLookupByLibrary.simpleMessage("ICMP 転送"),
+    "icmpForwardingDesc": MessageLookupByLibrary.simpleMessage(
+      "有効化すると ICMP Ping をサポート",
+    ),
     "icon": MessageLookupByLibrary.simpleMessage("アイコン"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("アイコン履歴"),
     "iconSource": MessageLookupByLibrary.simpleMessage("アイコンソース"),
@@ -959,6 +974,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "stop": MessageLookupByLibrary.simpleMessage("停止"),
     "stopVpn": MessageLookupByLibrary.simpleMessage("VPN を停止中..."),
     "stopped": MessageLookupByLibrary.simpleMessage("停止"),
+    "strictRoute": MessageLookupByLibrary.simpleMessage("厳格ルーティング"),
+    "strictRouteDesc": MessageLookupByLibrary.simpleMessage(
+      "TUN の厳格ルーティングモードを使用",
+    ),
     "style": MessageLookupByLibrary.simpleMessage("スタイル"),
     "styleSettings": MessageLookupByLibrary.simpleMessage("スタイル設定"),
     "subRule": MessageLookupByLibrary.simpleMessage("サブルール"),

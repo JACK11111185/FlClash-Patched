@@ -224,8 +224,15 @@ abstract class Tun with _$Tun {
     @Default(TunStack.mixed)
     @JsonKey(unknownEnumValue: TunStack.mixed)
     TunStack stack,
-    @JsonKey(name: 'dns-hijack') @Default(['any:53']) List<String> dnsHijack,
+    @JsonKey(name: 'dns-hijack') @Default([]) List<String> dnsHijack,
     @JsonKey(name: 'route-address') @Default([]) List<String> routeAddress,
+    @JsonKey(name: 'strict-route') @Default(false) bool strictRoute,
+    @JsonKey(name: 'disable-icmp-forwarding')
+    @Default(false)
+    bool disableIcmpForwarding,
+    @JsonKey(name: 'endpoint-independent-nat')
+    @Default(false)
+    bool endpointIndependentNat,
   }) = _Tun;
 
   factory Tun.fromJson(Map<String, Object?> json) => _$TunFromJson(json);
@@ -243,10 +250,14 @@ abstract class Tun with _$Tun {
 }
 
 extension TunExt on Tun {
-  Tun getRealTun(RouteMode routeMode) {
-    final mRouteAddress = routeMode == RouteMode.bypassPrivate
+  List<String> getMobileRouteAddress(RouteMode routeMode) {
+    return routeMode == RouteMode.bypassPrivate
         ? defaultBypassPrivateRouteAddress
         : routeAddress;
+  }
+
+  Tun getRealTun(RouteMode routeMode) {
+    final mRouteAddress = getMobileRouteAddress(routeMode);
     return switch (system.isDesktop) {
       true => copyWith(autoRoute: true, routeAddress: []),
       false => copyWith(
@@ -294,9 +305,7 @@ abstract class Dns with _$Dns {
     @Default(['+.local', '+.lan'])
     @JsonKey(name: 'fake-ip-filter')
     List<String> fakeIpFilter,
-    @Default({
-      'geosite:cn': 'https://doh.pub/dns-query',
-    })
+    @Default({'geosite:cn': 'https://doh.pub/dns-query'})
     @JsonKey(name: 'nameserver-policy')
     Map<String, String> nameserverPolicy,
     @Default(['https://doh.pub/dns-query', 'https://dns.alidns.com/dns-query'])

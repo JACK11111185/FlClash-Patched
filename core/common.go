@@ -230,6 +230,15 @@ func updateConfig(params *UpdateParams) {
 		if params.Tun.RouteAddress != nil {
 			general.Tun.RouteAddress = *params.Tun.RouteAddress
 		}
+		if params.Tun.StrictRoute != nil {
+			general.Tun.StrictRoute = *params.Tun.StrictRoute
+		}
+		if params.Tun.DisableICMPForwarding != nil {
+			general.Tun.DisableICMPForwarding = *params.Tun.DisableICMPForwarding
+		}
+		if params.Tun.EndpointIndependentNAT != nil {
+			general.Tun.EndpointIndependentNat = *params.Tun.EndpointIndependentNAT
+		}
 		if params.Tun.DNSHijack != nil {
 			general.Tun.DNSHijack = *params.Tun.DNSHijack
 		}

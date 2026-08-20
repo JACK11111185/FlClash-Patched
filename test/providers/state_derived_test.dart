@@ -242,6 +242,7 @@ void main() {
           (state) => state.copyWith(
             systemProxy: false,
             bypassDomain: const ['localhost'],
+            routeMode: RouteMode.bypassPrivate,
             autoSetSystemDns: true,
           ),
         );
@@ -251,7 +252,11 @@ void main() {
           (state) => state.copyWith(
             mixedPort: 8899,
             mode: Mode.global,
-            tun: state.tun.copyWith(enable: true),
+            tun: state.tun.copyWith(
+              enable: true,
+              disableIcmpForwarding: true,
+              endpointIndependentNat: true,
+            ),
           ),
         );
     expect(container.read(autoSetSystemDnsStateProvider).a, isFalse);
@@ -273,9 +278,10 @@ void main() {
     expect(tray.tunEnable, isTrue);
     expect(tray.isStart, isTrue);
 
-    final vpn = container.read(vpnStateProvider);
-    expect(vpn.stack, container.read(patchClashConfigProvider).tun.stack);
-    expect(vpn.vpnProps, container.read(vpnSettingProvider));
+    final mobileTun = container.read(sharedStateProvider).vpnOptions;
+    expect(mobileTun?.routeAddress, defaultBypassPrivateRouteAddress);
+    expect(mobileTun?.disableIcmpForwarding, true);
+    expect(mobileTun?.endpointIndependentNat, true);
 
     final dns = container.read(autoSetSystemDnsStateProvider);
     expect(dns.a, isTrue);
@@ -290,6 +296,52 @@ void main() {
     container.read(currentSSIDProvider.notifier).update((_) => 'Office');
     expect(container.read(suspendProvider), isTrue);
     expect(container.read(proxyStateProvider).isStart, isFalse);
+  });
+
+  test('native VPN options track only restart-relevant settings', () {
+    final changes = <VpnOptions?>[];
+    final subscription = container.listen(
+      vpnOptionsProvider,
+      (_, next) => changes.add(next),
+    );
+    addTearDown(subscription.close);
+
+    container
+        .read(vpnSettingProvider.notifier)
+        .update(
+          (state) => state.copyWith(networkSpeedNotification: true),
+        );
+    expect(changes, isEmpty);
+
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update(
+          (state) => state.copyWith(
+            mixedPort: 8899,
+            tun: state.tun.copyWith(
+              mtu: 1500,
+              disableIcmpForwarding: true,
+              endpointIndependentNat: true,
+            ),
+          ),
+        );
+    expect(changes, hasLength(1));
+    expect(changes.single?.port, 8899);
+    expect(changes.single?.mtu, 1500);
+    expect(changes.single?.disableIcmpForwarding, true);
+    expect(changes.single?.endpointIndependentNat, true);
+
+    container
+        .read(networkSettingProvider.notifier)
+        .update(
+          (state) => state.copyWith(
+            bypassDomain: const ['localhost'],
+            routeMode: RouteMode.bypassPrivate,
+          ),
+        );
+    expect(changes, hasLength(2));
+    expect(changes.last?.bypassDomain, ['localhost']);
+    expect(changes.last?.routeAddress, defaultBypassPrivateRouteAddress);
   });
 
   test('selection and delay providers resolve groups and profile state', () {

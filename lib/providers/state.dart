@@ -187,12 +187,10 @@ TrayState trayState(Ref ref) {
 }
 
 @riverpod
-VpnState vpnState(Ref ref) {
-  final vpnProps = ref.watch(vpnSettingProvider);
-  final stack = ref.watch(
-    patchClashConfigProvider.select((state) => state.tun.stack),
+VpnOptions? vpnOptions(Ref ref) {
+  return ref.watch(
+    sharedStateProvider.select((state) => state.vpnOptions),
   );
-  return VpnState(stack: stack, vpnProps: vpnProps);
 }
 
 @riverpod
@@ -614,6 +612,10 @@ SharedState sharedState(Ref ref) {
       (state) => VM3(state.tun.stack.name, state.mixedPort, state.tun.mtu),
     ),
   );
+  final tun = ref.watch(patchClashConfigProvider.select((state) => state.tun));
+  final routeMode = ref.watch(
+    networkSettingProvider.select((state) => state.routeMode),
+  );
   final vpnSetting = ref.watch(vpnSettingProvider);
   final currentProfileName = currentProfileVM2.a;
   final selectedMap = currentProfileVM2.b;
@@ -637,12 +639,15 @@ SharedState sharedState(Ref ref) {
       systemProxy: vpnSetting.systemProxy,
       port: port,
       ipv6: vpnSetting.ipv6,
-      dnsHijacking: vpnSetting.dnsHijacking,
+      captureDns: vpnSetting.captureDns,
       accessControlProps: vpnSetting.accessControlProps,
       allowBypass: vpnSetting.allowBypass,
       suspendSupport: vpnSetting.suspendSupport,
       bypassDomain: bypassDomain,
       mtu: mtu,
+      routeAddress: tun.getMobileRouteAddress(routeMode),
+      disableIcmpForwarding: tun.disableIcmpForwarding,
+      endpointIndependentNat: tun.endpointIndependentNat,
       includeAllNetworks: vpnSetting.includeAllNetworks,
       excludeLocalNetworks: vpnSetting.excludeLocalNetworks,
       excludeAPNs: vpnSetting.excludeAPNs,

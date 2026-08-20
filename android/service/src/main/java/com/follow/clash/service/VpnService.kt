@@ -74,7 +74,7 @@ class VpnService : SystemVpnService(), ManagedService {
 
     private val VpnOptions.tunDns
         get(): String {
-            if (dnsHijacking) {
+            if (captureDns) {
                 return NET_ANY
             }
             return buildString {
@@ -150,10 +150,14 @@ class VpnService : SystemVpnService(), ManagedService {
                     fd = fd,
                     protect = this::protect,
                     resolverProcess = this::resolverProcess,
-                    stack = options.stack,
-                    address = options.tunAddress,
-                    dns = options.tunDns,
-                    mtu = mtu,
+                    options = Core.TunOptions(
+                        stack = options.stack,
+                        address = options.tunAddress,
+                        dns = options.tunDns,
+                        mtu = mtu,
+                        disableIcmpForwarding = options.disableIcmpForwarding,
+                        endpointIndependentNat = options.endpointIndependentNat,
+                    ),
                 )
             } catch (error: Exception) {
                 stopTunLocked()

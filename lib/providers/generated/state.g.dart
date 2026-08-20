@@ -271,46 +271,46 @@ final class TrayStateProvider
 
 String _$trayStateHash() => r'bf8165e7ca36857c8405792f811027adcbf87a6d';
 
-@ProviderFor(vpnState)
-final vpnStateProvider = VpnStateProvider._();
+@ProviderFor(vpnOptions)
+final vpnOptionsProvider = VpnOptionsProvider._();
 
-final class VpnStateProvider
-    extends $FunctionalProvider<VpnState, VpnState, VpnState>
-    with $Provider<VpnState> {
-  VpnStateProvider._()
+final class VpnOptionsProvider
+    extends $FunctionalProvider<VpnOptions?, VpnOptions?, VpnOptions?>
+    with $Provider<VpnOptions?> {
+  VpnOptionsProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'vpnStateProvider',
+        name: r'vpnOptionsProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$vpnStateHash();
+  String debugGetCreateSourceHash() => _$vpnOptionsHash();
 
   @$internal
   @override
-  $ProviderElement<VpnState> $createElement($ProviderPointer pointer) =>
+  $ProviderElement<VpnOptions?> $createElement($ProviderPointer pointer) =>
       $ProviderElement(pointer);
 
   @override
-  VpnState create(Ref ref) {
-    return vpnState(ref);
+  VpnOptions? create(Ref ref) {
+    return vpnOptions(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(VpnState value) {
+  Override overrideWithValue(VpnOptions? value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<VpnState>(value),
+      providerOverride: $SyncValueProvider<VpnOptions?>(value),
     );
   }
 }
 
-String _$vpnStateHash() => r'128ddad03ce045ad1f8204e47aec3cb6cfa29f6e';
+String _$vpnOptionsHash() => r'571c4362bc66a30da175d96f9c4ee62be364a0e3';
 
 @ProviderFor(navigationState)
 final navigationStateProvider = NavigationStateProvider._();
@@ -2009,7 +2009,7 @@ final class SharedStateProvider
   }
 }
 
-String _$sharedStateHash() => r'50b6322e1be40392243b9915c0fad1ca7bb7735e';
+String _$sharedStateHash() => r'8b655aaefc48692d25b127a968b09c3f92b7234e';
 
 @ProviderFor(overlayTopOffset)
 final overlayTopOffsetProvider = OverlayTopOffsetProvider._();
