@@ -14,16 +14,15 @@ class AppPath {
   Completer<Directory> tempDir = Completer();
   Completer<Directory> cacheDir = Completer();
   late String appDirPath;
+  late final bool isPortable =
+      (system.isWindows || system.isLinux) &&
+      Directory(join(appDirPath, 'config')).existsSync();
 
   AppPath._internal() {
     appDirPath = join(dirname(Platform.resolvedExecutable));
     _initDataDir();
-    getTemporaryDirectory().then((value) {
-      tempDir.complete(value);
-    });
-    getApplicationCacheDirectory().then((value) {
-      cacheDir.complete(value);
-    });
+    _initTempDir();
+    _initCacheDir();
   }
 
   factory AppPath() {
@@ -32,6 +31,10 @@ class AppPath {
   }
 
   Future<void> _initDataDir() async {
+    if (isPortable) {
+      dataDir.complete(Directory(join(appDirPath, 'config')));
+      return;
+    }
     final supportDir = await getApplicationSupportDirectory();
     try {
       if (!system.isIOS) {
@@ -52,6 +55,29 @@ class AppPath {
     } catch (_) {
       dataDir.complete(supportDir);
     }
+  }
+
+  Future<void> _initCacheDir() async {
+    await dataDir.future;
+    if (isPortable) {
+      cacheDir.complete(Directory(join(await homeDirPath, '.cache')));
+      return;
+    }
+    final dir = await getApplicationCacheDirectory();
+    cacheDir.complete(dir);
+  }
+
+  Future<void> _initTempDir() async {
+    await dataDir.future;
+    if (isPortable) {
+      final portableTmpDir = Directory(join(await homeDirPath, 'tmp'));
+      if (await portableTmpDir.exists()) {
+        tempDir.complete(portableTmpDir);
+        return;
+      }
+    }
+    final dir = await getTemporaryDirectory();
+    tempDir.complete(dir);
   }
 
   Future<String> _getIOSAppGroupPath() async {
