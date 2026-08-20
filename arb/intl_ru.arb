@@ -173,7 +173,7 @@
   "ipv6Desc": "При включении будет возможно получать IPv6 трафик",
   "app": "Приложение",
   "general": "Общие",
-  "systemProxyDesc": "Прикрепить HTTP-прокси к VpnService",
+  "systemProxyDesc": "Настроить системный HTTP-прокси",
   "userAgent": "User-Agent",
   "unifiedDelay": "Унифицированная задержка",
   "unifiedDelayDesc": "Убрать дополнительные задержки, такие как рукопожатие",
@@ -416,6 +416,7 @@
   "importFile": "Импорт из файла",
   "importUrl": "Импорт по URL",
   "autoSetSystemDns": "Автоматическая настройка системного DNS",
+  "autoSetSystemDnsDesc": "Добавить резервный DNS-сервер в систему",
   "details": "Сведения о {label}",
   "creationTime": "Время создания",
   "process": "процесс",
@@ -684,6 +685,6 @@
   "tailscaleHealthWarnings": "Предупреждения о состоянии",
   "tailscaleNeedsMachineAuth": "Требуется одобрение устройства",
   "networking": "Оверлейные сети",
-  "networkingDesc": "Состояние P2P-узлов в текущей конфигурации",
+  "networkingDesc": "Просмотр состояния P2P-сетей",
   "networkingNoOutbounds": "В текущей конфигурации нет исходящих P2P-подключений"
 }

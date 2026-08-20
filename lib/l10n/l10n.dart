@@ -1404,10 +1404,10 @@ class AppLocalizations {
     return Intl.message('General', name: 'general', desc: '', args: []);
   }
 
-  /// `Attach HTTP proxy to VpnService`
+  /// `Set the system HTTP proxy`
   String get systemProxyDesc {
     return Intl.message(
-      'Attach HTTP proxy to VpnService',
+      'Set the system HTTP proxy',
       name: 'systemProxyDesc',
       desc: '',
       args: [],
@@ -3259,6 +3259,16 @@ class AppLocalizations {
     return Intl.message(
       'Auto set system DNS',
       name: 'autoSetSystemDns',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add a fallback DNS server to the system`
+  String get autoSetSystemDnsDesc {
+    return Intl.message(
+      'Add a fallback DNS server to the system',
+      name: 'autoSetSystemDnsDesc',
       desc: '',
       args: [],
     );
@@ -5639,10 +5649,10 @@ class AppLocalizations {
     return Intl.message('Networking', name: 'networking', desc: '', args: []);
   }
 
-  /// `Status of P2P nodes in the current configuration`
+  /// `View status of P2P networks`
   String get networkingDesc {
     return Intl.message(
-      'Status of P2P nodes in the current configuration',
+      'View status of P2P networks',
       name: 'networkingDesc',
       desc: '',
       args: [],

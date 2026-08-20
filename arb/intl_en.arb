@@ -173,7 +173,7 @@
   "ipv6Desc": "When turned on it will be able to receive IPv6 traffic",
   "app": "App",
   "general": "General",
-  "systemProxyDesc": "Attach HTTP proxy to VpnService",
+  "systemProxyDesc": "Set the system HTTP proxy",
   "userAgent": "User-Agent",
   "unifiedDelay": "Unified Delay",
   "unifiedDelayDesc": "Remove extra delays such as handshaking",
@@ -416,6 +416,7 @@
   "importFile": "Import from file",
   "importUrl": "Import from URL",
   "autoSetSystemDns": "Auto set system DNS",
+  "autoSetSystemDnsDesc": "Add a fallback DNS server to the system",
   "details": "{label} details",
   "creationTime": "Creation time",
   "process": "Process",
@@ -684,6 +685,6 @@
   "tailscaleHealthWarnings": "Health warnings",
   "tailscaleNeedsMachineAuth": "Device approval required",
   "networking": "Networking",
-  "networkingDesc": "Status of P2P nodes in the current configuration",
+  "networkingDesc": "View status of P2P networks",
   "networkingNoOutbounds": "No P2P outbound in the current configuration"
 }

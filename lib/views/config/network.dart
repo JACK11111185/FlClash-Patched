@@ -194,6 +194,7 @@ class AutoSetSystemDnsItem extends ConsumerWidget {
     );
     return ListItem.toggle(
       title: Text(appLocalizations.autoSetSystemDns),
+      subtitle: Text(appLocalizations.autoSetSystemDnsDesc),
       value: autoSetSystemDns,
       onChanged: (bool value) async {
         ref

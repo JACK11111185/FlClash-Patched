@@ -394,6 +394,7 @@ List<String> _allMessages(AppLocalizations appLocalizations) {
     appLocalizations.importFile,
     appLocalizations.importUrl,
     appLocalizations.autoSetSystemDns,
+    appLocalizations.autoSetSystemDnsDesc,
     appLocalizations.details('value'),
     appLocalizations.creationTime,
     appLocalizations.process,
