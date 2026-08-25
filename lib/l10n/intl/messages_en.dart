@@ -242,7 +242,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "batteryOptimizationStatusTip": MessageLookupByLibrary.simpleMessage(
       "Affected by the system, this status may not always be accurate.",
     ),
-    "bind": MessageLookupByLibrary.simpleMessage("Bind"),
     "blacklistMode": MessageLookupByLibrary.simpleMessage("Blacklist mode"),
     "bypassDomain": MessageLookupByLibrary.simpleMessage("Bypass domain"),
     "bypassDomainDesc": MessageLookupByLibrary.simpleMessage(

@@ -1,7 +1,7 @@
 name: fl_clash
 description: A multi-platform proxy client based on mihomo, simple and easy to use, open-source and ad-free.
 publish_to: 'none'
-version: 0.8.117+2026082417
+version: 0.8.117+2026082522
 environment:
   sdk: '>=3.8.0 <4.0.0'
 
@@ -50,7 +50,10 @@ dependencies:
   image_picker: ^1.2.0
   ffi: ^2.1.4
 
-  webdav_client: ^1.2.2
+  webdav_client:
+    git:
+      url: https://github.com/chenx-dust/webdav_client.git
+      ref: 674b61677524696d5cb44b904706e0f84251a6be
   dio: ^5.8.0+1
   win32: ^6.0.1
   re_editor: ^0.10.0

@@ -1159,11 +1159,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Bind`
-  String get bind {
-    return Intl.message('Bind', name: 'bind', desc: '', args: []);
-  }
-
   /// `Connectivity:`
   String get connectivity {
     return Intl.message(

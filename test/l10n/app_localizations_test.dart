@@ -143,7 +143,6 @@ List<String> _allMessages(AppLocalizations appLocalizations) {
     appLocalizations.backupSuccess,
     appLocalizations.noInfo,
     appLocalizations.pleaseBindWebDAV,
-    appLocalizations.bind,
     appLocalizations.connectivity,
     appLocalizations.webDAVConfiguration,
     appLocalizations.address,
