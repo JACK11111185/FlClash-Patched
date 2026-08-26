@@ -7,10 +7,7 @@ import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/providers/database.dart';
-import 'package:fl_clash/providers/state.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/proxies/list.dart';
 import 'package:fl_clash/views/proxies/tab.dart';
@@ -250,6 +247,37 @@ void main() {
         const ChangeProxyParams(groupName: 'A', proxyName: ''),
         closeConnections: true,
       ),
+    );
+  });
+
+  testWidgets('selecting the current proxy does not show a close prompt', (
+    tester,
+  ) async {
+    globalContainer.read(groupsProvider.notifier).value = [
+      const Group(
+        type: GroupType.Selector,
+        name: 'A',
+        now: 'Node A',
+      ),
+    ];
+
+    await tester.pumpWidget(const _TestApp(child: SizedBox()));
+    await tester.pump();
+
+    await globalContainer
+        .read(proxiesActionProvider.notifier)
+        .changeProxy(groupName: 'A', proxyName: 'Node A');
+    await tester.pump();
+
+    verify(
+      () => coreHandler.changeProxy(
+        const ChangeProxyParams(groupName: 'A', proxyName: 'Node A'),
+        closeConnections: false,
+      ),
+    ).called(1);
+    expect(
+      find.text('Close connections using the previous proxy?'),
+      findsNothing,
     );
   });
 

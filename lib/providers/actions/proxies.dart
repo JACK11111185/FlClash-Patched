@@ -256,7 +256,12 @@ class ProxiesAction extends _$ProxiesAction {
     required String proxyName,
   }) async {
     final appSetting = ref.read(appSettingProvider);
-    final closeConnections = appSetting.closeConnections;
+    final currentProxyName = ref
+        .read(groupsProvider)
+        .getGroup(groupName)
+        ?.realNow;
+    final isSameProxy = proxyName.isNotEmpty && currentProxyName == proxyName;
+    final closeConnections = appSetting.closeConnections && !isSameProxy;
     final params = ChangeProxyParams(
       groupName: groupName,
       proxyName: proxyName,
@@ -265,7 +270,9 @@ class ProxiesAction extends _$ProxiesAction {
       params,
       closeConnections: closeConnections,
     );
-    if (!closeConnections && appSetting.promptCloseConnections) {
+    if (!isSameProxy &&
+        !closeConnections &&
+        appSetting.promptCloseConnections) {
       _showCloseConnectionsSnackBar(params);
     }
     ref.read(checkIpNumProvider.notifier).add();
