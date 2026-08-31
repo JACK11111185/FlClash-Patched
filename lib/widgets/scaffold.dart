@@ -1,0 +1,538 @@
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/widgets/pop_scope.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+
+import 'chip.dart';
+import 'inherited.dart';
+
+typedef OnKeywordsUpdateCallback = void Function(List<String> keywords);
+typedef KeywordLabelBuilder = String Function(String keyword);
+
+typedef AppBarSearchStateBuilder =
+    AppBarSearchState? Function(AppBarSearchState? state);
+
+class CommonScaffold extends StatefulWidget {
+  final AppBar? appBar;
+  final Widget body;
+  final Color? backgroundColor;
+  final String? title;
+  final bool isLoading;
+  final List<Widget>? actions;
+  final bool? centerTitle;
+  final Widget? floatingActionButton;
+  final bool? isTV;
+  final AppBarEditState? editState;
+  final AppBarSearchState? searchState;
+  final OnKeywordsUpdateCallback? onKeywordsUpdate;
+  final KeywordLabelBuilder? keywordLabelBuilder;
+  final bool? resizeToAvoidBottomInset;
+
+  const CommonScaffold({
+    super.key,
+    this.appBar,
+    required this.body,
+    this.backgroundColor,
+    this.title,
+    this.actions,
+    this.centerTitle,
+    this.editState,
+    this.isLoading = false,
+    this.searchState,
+    this.floatingActionButton,
+    this.isTV,
+    this.onKeywordsUpdate,
+    this.keywordLabelBuilder,
+    this.resizeToAvoidBottomInset,
+  });
+
+  @override
+  State<CommonScaffold> createState() => CommonScaffoldState();
+}
+
+class CommonScaffoldState extends State<CommonScaffold> {
+  static const _normalAppBarKey = ValueKey('normalAppBar');
+  static const _searchAppBarKey = ValueKey('searchAppBar');
+
+  late final ValueNotifier<AppBarState> _appBarState;
+  final ValueNotifier<bool> _loadingNotifier = ValueNotifier(false);
+  final ValueNotifier<bool> _isFabExtendedNotifier = ValueNotifier(true);
+  final ValueNotifier<List<String>> _keywordsNotifier = ValueNotifier([]);
+  final _textController = TextEditingController();
+
+  bool get _isSearch {
+    return _appBarState.value.searchState?.query != null;
+  }
+
+  bool get _isEdit {
+    final editState = _appBarState.value.editState;
+    if (editState == null) {
+      return false;
+    }
+    return editState.editCount > 0;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _appBarState = ValueNotifier(
+      AppBarState(editState: widget.editState, searchState: widget.searchState),
+    );
+    _loadingNotifier.value = widget.isLoading;
+  }
+
+  Future<void> _updateSearchState(AppBarSearchStateBuilder builder) async {
+    _appBarState.value = _appBarState.value.copyWith(
+      searchState: builder(_appBarState.value.searchState),
+    );
+  }
+
+  void handleToSearch() {
+    _updateSearchState((state) => state?.copyWith(query: ''));
+  }
+
+  AppBarThemeData _buildStaticAppBarTheme(
+    ThemeData theme, {
+    Color? backgroundColor,
+    IconThemeData? iconTheme,
+    TextStyle? titleTextStyle,
+    TextStyle? toolbarTextStyle,
+  }) {
+    return theme.appBarTheme.copyWith(
+      backgroundColor:
+          backgroundColor ??
+          theme.appBarTheme.backgroundColor ??
+          theme.colorScheme.surface,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: iconTheme,
+      titleTextStyle: titleTextStyle,
+      toolbarTextStyle: toolbarTextStyle,
+    );
+  }
+
+  Widget _buildAppBarTheme(Widget child) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colorScheme = theme.colorScheme;
+    final appBarTheme = _isSearch
+        ? _buildStaticAppBarTheme(
+            theme,
+            backgroundColor: colorScheme.brightness == Brightness.dark
+                ? Colors.grey[900]
+                : Colors.white,
+            iconTheme: theme.primaryIconTheme.copyWith(color: Colors.grey),
+            titleTextStyle: theme.textTheme.titleLarge,
+            toolbarTextStyle: theme.textTheme.bodyMedium,
+          )
+        : _buildStaticAppBarTheme(theme);
+    return AnimatedTheme(
+      duration: commonDuration,
+      curve: Curves.easeOutCubic,
+      data: theme.copyWith(
+        appBarTheme: appBarTheme,
+        inputDecorationTheme: _isSearch
+            ? InputDecorationTheme(
+                hintStyle: theme.inputDecorationTheme.hintStyle,
+                border: InputBorder.none,
+              )
+            : theme.inputDecorationTheme,
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildAppBarTransition(Widget child) {
+    return AnimatedSwitcher(
+      duration: midDuration,
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      layoutBuilder: (currentChild, previousChildren) {
+        return Stack(
+          alignment: Alignment.center,
+          children: <Widget>[...previousChildren, ?currentChild],
+        );
+      },
+      transitionBuilder: (child, animation) =>
+          FadeTransition(opacity: animation, child: child),
+      child: KeyedSubtree(
+        key: _isSearch ? _searchAppBarKey : _normalAppBarKey,
+        child: child,
+      ),
+    );
+  }
+
+  @override
+  void didUpdateWidget(CommonScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.editState != widget.editState) {
+      _appBarState.value = _appBarState.value.copyWith(
+        editState: widget.editState,
+      );
+    }
+    if (oldWidget.searchState != widget.searchState) {
+      final currentSearchState = _appBarState.value.searchState;
+      _appBarState.value = _appBarState.value.copyWith(
+        searchState: widget.searchState?.copyWith(
+          query: currentSearchState?.query,
+        ),
+      );
+    }
+    if (oldWidget.isLoading != widget.isLoading) {
+      _loadingNotifier.value = widget.isLoading;
+    }
+  }
+
+  void _handleClearInput() {
+    _textController.text = '';
+    if (_appBarState.value.searchState != null) {
+      _appBarState.value.searchState!.onSearch('');
+    }
+    _updateSearchState((state) => state?.copyWith(query: ''));
+  }
+
+  void handleExitSearching() {
+    if (!_isSearch) {
+      return;
+    }
+    _handleClearInput();
+    _updateSearchState((state) => state?.copyWith(query: null));
+  }
+
+  void _handleExitAppBarLayer() {
+    handleExitSearching();
+    if (_isEdit) {
+      _appBarState.value.editState?.onExit();
+    }
+  }
+
+  void _popAppBarLayer() {
+    if (!_isEdit && !_isSearch) {
+      return;
+    }
+    Navigator.of(context).pop();
+  }
+
+  @override
+  void dispose() {
+    _appBarState.dispose();
+    _textController.dispose();
+    _isFabExtendedNotifier.dispose();
+    _loadingNotifier.dispose();
+    super.dispose();
+  }
+
+  void addKeyword(String keyword) {
+    final isContains = _keywordsNotifier.value.contains(keyword);
+    if (isContains) return;
+    final keywords = List<String>.from(_keywordsNotifier.value)..add(keyword);
+    _keywordsNotifier.value = keywords;
+  }
+
+  void _deleteKeyword(String keyword) {
+    final isContains = _keywordsNotifier.value.contains(keyword);
+    if (!isContains) return;
+    final keywords = List<String>.from(_keywordsNotifier.value)
+      ..remove(keyword);
+    _keywordsNotifier.value = keywords;
+  }
+
+  Widget? _buildLeading(VoidCallback? backAction) {
+    if (_isEdit) {
+      return IconButton(
+        onPressed: _popAppBarLayer,
+        icon: const Icon(Icons.close),
+      );
+    }
+    if (_isSearch) {
+      return IconButton(
+        onPressed: _popAppBarLayer,
+        icon: const Icon(Icons.arrow_back),
+      );
+    }
+    return backAction != null
+        ? BackButton(
+            onPressed: () {
+              if (!mounted) {
+                return;
+              }
+              backAction();
+            },
+          )
+        : null;
+  }
+
+  bool _isInvalidRegexSearch(AppBarSearchState searchState) {
+    final query = searchState.query ?? '';
+    return searchState.useRegex &&
+        query.isNotEmpty &&
+        !SearchMatcher.isValidRegex(query);
+  }
+
+  Widget _buildTitle(AppBarSearchState? startState) {
+    final appLocalizations = context.appLocalizations;
+    final isInvalidRegex =
+        startState != null && _isInvalidRegexSearch(startState);
+    return _isSearch
+        ? TextField(
+            autofocus: true,
+            controller: _textController,
+            inputFormatters: TextInputLimits.limit(TextInputLimits.search),
+            style: context.textTheme.titleLarge?.copyWith(
+              color: isInvalidRegex ? context.colorScheme.error : null,
+            ),
+            onChanged: (value) {
+              if (startState != null) {
+                startState.onSearch(value);
+              }
+              _updateSearchState((state) => state?.copyWith(query: value));
+            },
+            decoration: InputDecoration(hintText: appLocalizations.search),
+          )
+        : Text(
+            !_isEdit
+                ? widget.title!
+                : appLocalizations.selectedCountTitle(
+                    '${_appBarState.value.editState?.editCount ?? 0}',
+                  ),
+          );
+  }
+
+  void _toggleRegexSearch(AppBarSearchState searchState) {
+    final useRegex = !searchState.useRegex;
+    searchState.onRegexChange?.call(useRegex);
+    _updateSearchState((state) => state?.copyWith(useRegex: useRegex));
+  }
+
+  Widget _buildRegexSearchButton(AppBarSearchState searchState) {
+    void onPressed() {
+      _toggleRegexSearch(searchState);
+    }
+
+    if (searchState.useRegex) {
+      return IconButton.filledTonal(
+        tooltip: context.appLocalizations.regexSearch,
+        onPressed: onPressed,
+        icon: const Icon(Icons.code),
+      );
+    }
+    return IconButton(
+      tooltip: context.appLocalizations.regexSearch,
+      onPressed: onPressed,
+      icon: const Icon(Icons.code_outlined),
+    );
+  }
+
+  List<Widget> _buildActions(
+    AppBarSearchState? searchState,
+    List<Widget> actions,
+    bool isTV,
+  ) {
+    if (_isSearch) {
+      return genActions([
+        if (_textController.text.isNotEmpty)
+          IconButton(
+            tooltip: context.appLocalizations.clear,
+            onPressed: _handleClearInput,
+            icon: const Icon(Icons.close),
+          ),
+        if (searchState?.onRegexChange != null)
+          _buildRegexSearchButton(searchState!),
+      ]);
+    }
+    return genActions([
+      if (isTV && widget.floatingActionButton != null)
+        SizedBox(
+          height: 48,
+          child: CommonScaffoldFabExtendedProvider(
+            isExtended: true,
+            child: widget.floatingActionButton!,
+          ),
+        ),
+      if (searchState != null && widget.searchState?.autoAddSearch == true)
+        IconButton(
+          tooltip: context.appLocalizations.search,
+          onPressed: () {
+            _updateSearchState((state) => state?.copyWith(query: ''));
+          },
+          icon: const Icon(Icons.search),
+        ),
+      ...actions,
+    ]);
+  }
+
+  Widget _buildAppBarWrap(Widget child) {
+    final appBar = _buildAppBarTheme(child);
+    if (_isEdit || _isSearch) {
+      return BackLayerScope(onBack: _handleExitAppBarLayer, child: appBar);
+    }
+    return appBar;
+  }
+
+  PreferredSizeWidget _buildAppBar(VoidCallback? backAction, bool isTV) {
+    final theme = Theme.of(context);
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(kToolbarHeight),
+      child: Theme(
+        data: theme.copyWith(appBarTheme: _buildStaticAppBarTheme(theme)),
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            widget.appBar ??
+                ValueListenableBuilder<AppBarState>(
+                  valueListenable: _appBarState,
+                  builder: (_, state, _) {
+                    return _buildAppBarTransition(
+                      _buildAppBarWrap(
+                        AppBar(
+                          automaticallyImplyLeading: backAction != null
+                              ? false
+                              : true,
+                          animateColor: true,
+                          centerTitle: widget.centerTitle ?? false,
+                          leading: _buildLeading(backAction),
+                          title: _buildTitle(state.searchState),
+                          actions: _buildActions(
+                            state.searchState,
+                            state.actions.isNotEmpty
+                                ? state.actions
+                                : widget.actions ?? [],
+                            isTV,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+            ValueListenableBuilder(
+              valueListenable: _loadingNotifier,
+              builder: (_, value, _) {
+                return value == true
+                    ? const LinearProgressIndicator()
+                    : Container();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    assert(widget.appBar != null || widget.title != null);
+    final backActionProvider = CommonScaffoldBackActionProvider.of(context);
+    final isTV = widget.isTV ?? system.isTV;
+    final body = SafeArea(
+      bottom: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isTV &&
+              widget.appBar != null &&
+              widget.floatingActionButton != null)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: CommonScaffoldFabExtendedProvider(
+                isExtended: true,
+                child: widget.floatingActionButton!,
+              ),
+            ),
+          ValueListenableBuilder(
+            valueListenable: _keywordsNotifier,
+            builder: (_, keywords, _) {
+              if (widget.onKeywordsUpdate != null) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  widget.onKeywordsUpdate!(keywords);
+                });
+              }
+              if (keywords.isEmpty) {
+                return const SizedBox();
+              }
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: Wrap(
+                  runSpacing: 8,
+                  spacing: 8,
+                  children: [
+                    for (final keyword in keywords)
+                      CommonChip(
+                        label:
+                            widget.keywordLabelBuilder?.call(keyword) ??
+                            keyword,
+                        labelStyle: context.textTheme.labelSmall?.copyWith(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                        type: ChipType.delete,
+                        onPressed: () {
+                          _deleteKeyword(keyword);
+                        },
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+          Expanded(child: widget.body),
+        ],
+      ),
+    );
+    return Scaffold(
+      appBar: _buildAppBar(backActionProvider?.backAction, isTV),
+      body: NotificationListener<UserScrollNotification>(
+        child: body,
+        onNotification: (notification) {
+          if (notification.direction == ScrollDirection.reverse) {
+            _isFabExtendedNotifier.value = false;
+          } else if (notification.direction == ScrollDirection.forward) {
+            _isFabExtendedNotifier.value = true;
+          }
+          return true;
+        },
+      ),
+      resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
+      backgroundColor: widget.backgroundColor,
+      floatingActionButton: !isTV && widget.floatingActionButton != null
+          ? ValueListenableBuilder<bool>(
+              valueListenable: _isFabExtendedNotifier,
+              builder: (_, isExtended, child) {
+                return CommonScaffoldFabExtendedProvider(
+                  isExtended: isExtended,
+                  child: child!,
+                );
+              },
+              child: widget.floatingActionButton,
+            )
+          : null,
+    );
+  }
+}
+
+List<Widget> genActions(List<Widget> actions, {double? space}) {
+  return <Widget>[
+    ...actions.separated(SizedBox(width: space ?? 4)),
+    const SizedBox(width: 8),
+  ];
+}
+
+class BaseScaffold extends StatelessWidget {
+  final String title;
+  final List<Widget> actions;
+  final Widget body;
+
+  const BaseScaffold({
+    super.key,
+    required this.title,
+    this.actions = const [],
+    required this.body,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CommonScaffold(body: body, title: title, actions: actions);
+  }
+}

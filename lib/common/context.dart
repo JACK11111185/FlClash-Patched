@@ -1,0 +1,109 @@
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/manager/manager.dart';
+import 'package:fl_clash/models/state.dart';
+import 'package:fl_clash/widgets/inherited.dart';
+import 'package:fl_clash/widgets/scaffold.dart';
+import 'package:fl_clash/widgets/sheet.dart';
+import 'package:flutter/material.dart';
+
+extension BuildContextExtension on BuildContext {
+  CommonScaffoldState? get commonScaffoldState {
+    return findAncestorStateOfType<CommonScaffoldState>();
+  }
+
+  void safeNestedPop<T extends Object?>([T? result]) {
+    final nestedPop = SheetProvider.of(this)?.nestedNavigatorPop;
+    if (nestedPop != null) {
+      return nestedPop(result);
+    } else {
+      return Navigator.of(this).pop(result);
+    }
+  }
+
+  double get sheetTopPadding {
+    final sheetType = SheetProvider.of(this)!.type;
+    if (sheetType == SheetType.bottomSheet) {
+      return sheetAppBarHeight;
+    } else {
+      return 10;
+    }
+  }
+
+  void showNotifier(
+    String text, {
+    MessageActionState? actionState,
+    bool allowCopy = false,
+  }) {
+    return findAncestorStateOfType<StatusManagerState>()?.message(
+      text,
+      actionState: actionState,
+      allowCopy: allowCopy,
+    );
+  }
+
+  void showSnackBar(String message, {SnackBarAction? action, bool? persist}) {
+    final messager = ScaffoldMessenger.of(this);
+    messager.removeCurrentSnackBar();
+    messager.showSnackBar(
+      SnackBar(
+        action: action,
+        persist: persist,
+        content: Text(message),
+        behavior: SnackBarBehavior.fixed,
+        duration: const Duration(milliseconds: 1500),
+      ),
+    );
+  }
+
+  Size get appSize {
+    return MediaQuery.of(this).size;
+  }
+
+  double get viewWidth {
+    return appSize.width;
+  }
+
+  ColorScheme get colorScheme => Theme.of(this).colorScheme;
+
+  TextTheme get textTheme => Theme.of(this).textTheme;
+
+  AppLocalizations get appLocalizations => AppLocalizations.of(this);
+
+  T? findLastStateOfType<T extends State>() {
+    T? state;
+
+    void visitor(Element element) {
+      if (!element.mounted) {
+        return;
+      }
+      if (element is StatefulElement) {
+        if (element.state is T) {
+          state = element.state as T;
+        }
+      }
+      element.visitChildren(visitor);
+    }
+
+    visitor(this as Element);
+    return state;
+  }
+}
+
+class BackHandleInherited extends InheritedWidget {
+  final Function handleBack;
+
+  const BackHandleInherited({
+    super.key,
+    required this.handleBack,
+    required super.child,
+  });
+
+  static BackHandleInherited? of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<BackHandleInherited>();
+
+  @override
+  bool updateShouldNotify(BackHandleInherited oldWidget) {
+    return handleBack != oldWidget.handleBack;
+  }
+}

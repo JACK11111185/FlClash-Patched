@@ -1,0 +1,289 @@
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:flutter/material.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+import 'models.dart';
+
+part 'generated/config.freezed.dart';
+part 'generated/config.g.dart';
+
+const defaultBypassDomain = ['localhost', '*.local', '*.lan'];
+
+const defaultAppSettingProps = AppSettingProps();
+const defaultVpnProps = VpnProps();
+const defaultNetworkProps = NetworkProps();
+const defaultProxiesStyleProps = ProxiesStyleProps();
+const defaultWindowProps = WindowProps();
+const defaultAccessControlProps = AccessControlProps();
+const defaultThemeProps = ThemeProps(primaryColor: defaultPrimaryColor);
+const defaultForegroundTickerInterval = 1;
+const defaultForegroundTickerIdleInterval = 2;
+
+const List<DashboardWidget> defaultDashboardWidgets = [
+  DashboardWidget.networkSpeed,
+  DashboardWidget.systemProxyButton,
+  DashboardWidget.tunButton,
+  DashboardWidget.outboundMode,
+  DashboardWidget.networkDetection,
+  DashboardWidget.trafficUsage,
+  DashboardWidget.intranetIp,
+];
+
+List<DashboardWidget> dashboardWidgetsSafeFormJson(
+  List<dynamic>? dashboardWidgets,
+) {
+  try {
+    return dashboardWidgets
+            ?.map((e) => $enumDecode(_$DashboardWidgetEnumMap, e))
+            .toList() ??
+        defaultDashboardWidgets;
+  } catch (_) {
+    return defaultDashboardWidgets;
+  }
+}
+
+@freezed
+abstract class AppSettingProps with _$AppSettingProps {
+  const factory AppSettingProps({
+    String? locale,
+    @Default(defaultDashboardWidgets)
+    @JsonKey(fromJson: dashboardWidgetsSafeFormJson)
+    List<DashboardWidget> dashboardWidgets,
+    @Default(false) bool onlyStatisticsProxy,
+    @Default(false) bool autoLaunch,
+    @Default(false) bool highPriorityAutoLaunch,
+    @Default(false) bool silentLaunch,
+    @Default(false) bool autoRun,
+    @Default(false) bool openLogs,
+    @Default(false) bool closeConnections,
+    @Default(true) bool promptCloseConnections,
+    @Default(defaultTestUrl) String testUrl,
+    @Default(true) bool isAnimateToPage,
+    @Default(true) bool isSwipeToPage,
+    @Default(true) bool autoCheckUpdate,
+    @Default(false) bool ignoreCertificateErrors,
+    @Default(false) bool showLabel,
+    @Default(false) bool disclaimerAccepted,
+    @Default(true) bool minimizeOnExit,
+    @Default(false) bool hidden,
+    @Default(false) bool developerMode,
+    @Default(RestoreStrategy.compatible)
+    @JsonKey(unknownEnumValue: RestoreStrategy.compatible)
+    RestoreStrategy restoreStrategy,
+    @Default('') String customUserAgent,
+    @Default(defaultForegroundTickerInterval) int foregroundTickerInterval,
+    @Default(true) bool foregroundTickerIdleWhenUnfocused,
+    @Default(defaultForegroundTickerIdleInterval)
+    int foregroundTickerIdleInterval,
+  }) = _AppSettingProps;
+
+  factory AppSettingProps.fromJson(Map<String, Object?> json) =>
+      _$AppSettingPropsFromJson(json);
+
+  factory AppSettingProps.safeFromJson(Map<String, Object?>? json) {
+    try {
+      return json == null
+          ? defaultAppSettingProps
+          : AppSettingProps.fromJson(json);
+    } catch (_) {
+      return defaultAppSettingProps;
+    }
+  }
+}
+
+@freezed
+abstract class AccessControlProps with _$AccessControlProps {
+  const factory AccessControlProps({
+    @Default(false) bool enable,
+    @Default(AccessControlMode.rejectSelected)
+    @JsonKey(unknownEnumValue: AccessControlMode.rejectSelected)
+    AccessControlMode mode,
+    @Default([]) List<String> acceptList,
+    @Default([]) List<String> rejectList,
+    @Default(AccessSortType.none)
+    @JsonKey(unknownEnumValue: AccessSortType.none)
+    AccessSortType sort,
+    @Default(true) bool isFilterSystemApp,
+    @Default(true) bool isFilterNonInternetApp,
+  }) = _AccessControlProps;
+
+  factory AccessControlProps.fromJson(Map<String, Object?> json) =>
+      _$AccessControlPropsFromJson(json);
+}
+
+extension AccessControlPropsExt on AccessControlProps {
+  List<String> get currentList => switch (mode) {
+    AccessControlMode.acceptSelected => acceptList,
+    AccessControlMode.rejectSelected => rejectList,
+  };
+
+  AccessControlProps copyWithNewList(List<String> value) => switch (mode) {
+    AccessControlMode.acceptSelected => copyWith(acceptList: value),
+    AccessControlMode.rejectSelected => copyWith(rejectList: value),
+  };
+}
+
+@freezed
+abstract class WindowProps with _$WindowProps {
+  const factory WindowProps({
+    @Default(0) double width,
+    @Default(0) double height,
+    double? top,
+    double? left,
+  }) = _WindowProps;
+
+  factory WindowProps.fromJson(Map<String, Object?>? json) =>
+      json == null ? const WindowProps() : _$WindowPropsFromJson(json);
+}
+
+extension WindowPropsExt on WindowProps {
+  Size get _size => Size(width, height);
+
+  Size get size => _size.isEmpty ? const Size(700, 580) : _size;
+}
+
+@freezed
+abstract class VpnProps with _$VpnProps {
+  const factory VpnProps({
+    @Default(true) bool enable,
+    @Default(true) bool systemProxy,
+    @Default(false) bool ipv6,
+    @Default(true) bool allowBypass,
+    @Default(true) bool captureDns,
+    @Default(true) bool suspendSupport,
+    @Default(false) bool networkSpeedNotification,
+    @Default(false) bool includeAllNetworks,
+    @Default(true) bool excludeLocalNetworks,
+    @Default(true) bool excludeAPNs,
+    @Default(true) bool excludeCellularServices,
+    @Default(false) bool enforceRoutes,
+    @Default(true) bool excludeDeviceCommunication,
+    @Default(defaultAccessControlProps) AccessControlProps accessControlProps,
+  }) = _VpnProps;
+
+  factory VpnProps.fromJson(Map<String, Object?>? json) =>
+      json == null ? defaultVpnProps : _$VpnPropsFromJson(json);
+}
+
+@freezed
+abstract class NetworkProps with _$NetworkProps {
+  const factory NetworkProps({
+    @Default(true) bool systemProxy,
+    @Default(defaultBypassDomain) List<String> bypassDomain,
+    @Default(RouteMode.config)
+    @JsonKey(unknownEnumValue: RouteMode.config)
+    RouteMode routeMode,
+    @Default(true) bool autoSetSystemDns,
+    @Default(false) bool appendSystemDns,
+  }) = _NetworkProps;
+
+  factory NetworkProps.fromJson(Map<String, Object?>? json) =>
+      json == null ? const NetworkProps() : _$NetworkPropsFromJson(json);
+}
+
+@freezed
+abstract class ProxiesStyleProps with _$ProxiesStyleProps {
+  const factory ProxiesStyleProps({
+    @Default(ProxiesType.tab)
+    @JsonKey(unknownEnumValue: ProxiesType.tab)
+    ProxiesType type,
+    @Default(ProxiesSortType.none)
+    @JsonKey(unknownEnumValue: ProxiesSortType.none)
+    ProxiesSortType sortType,
+    @Default(ProxiesLayout.standard)
+    @JsonKey(unknownEnumValue: ProxiesLayout.standard)
+    ProxiesLayout layout,
+    @Default(ProxiesListHeaderStyle.loose)
+    @JsonKey(unknownEnumValue: ProxiesListHeaderStyle.loose)
+    ProxiesListHeaderStyle listHeaderStyle,
+    @Default(ProxiesIconStyle.standard)
+    @JsonKey(unknownEnumValue: ProxiesIconStyle.standard)
+    ProxiesIconStyle iconStyle,
+    @Default(ProxiesIconSource.standard)
+    @JsonKey(unknownEnumValue: ProxiesIconSource.standard)
+    ProxiesIconSource iconSource,
+    @Default(ProxyCardType.standard)
+    @JsonKey(unknownEnumValue: ProxyCardType.standard)
+    ProxyCardType cardType,
+    @Default(false) bool hideUnavailable,
+    @Default(false) bool showHiddenGroups,
+  }) = _ProxiesStyleProps;
+
+  factory ProxiesStyleProps.fromJson(Map<String, Object?>? json) => json == null
+      ? defaultProxiesStyleProps
+      : _$ProxiesStylePropsFromJson(json);
+}
+
+@freezed
+abstract class TextScale with _$TextScale {
+  const factory TextScale({
+    @Default(false) bool enable,
+    @Default(1.0) double scale,
+  }) = _TextScale;
+
+  factory TextScale.fromJson(Map<String, Object?> json) =>
+      _$TextScaleFromJson(json);
+}
+
+@freezed
+abstract class ThemeProps with _$ThemeProps {
+  const factory ThemeProps({
+    int? primaryColor,
+    @Default(defaultPrimaryColors) List<int> primaryColors,
+    @Default(ThemeMode.system)
+    @JsonKey(unknownEnumValue: ThemeMode.system)
+    ThemeMode themeMode,
+    @Default(DynamicSchemeVariant.content)
+    @JsonKey(unknownEnumValue: DynamicSchemeVariant.content)
+    DynamicSchemeVariant schemeVariant,
+    @Default(false) bool pureBlack,
+    @Default(true) bool monochromeTrayIcon,
+    @Default(true) bool predictiveBack,
+    @Default(TextScale()) TextScale textScale,
+  }) = _ThemeProps;
+
+  factory ThemeProps.fromJson(Map<String, Object?> json) =>
+      _$ThemePropsFromJson(json);
+
+  factory ThemeProps.safeFromJson(Map<String, Object?>? json) {
+    if (json == null) {
+      return defaultThemeProps;
+    }
+    try {
+      return ThemeProps.fromJson(json);
+    } catch (_) {
+      return defaultThemeProps;
+    }
+  }
+}
+
+@freezed
+abstract class Config with _$Config {
+  const factory Config({
+    int? currentProfileId,
+    @Default(false) bool overrideDns,
+    @Default([]) List<HotKeyAction> hotKeyActions,
+    @JsonKey(fromJson: AppSettingProps.safeFromJson)
+    @Default(defaultAppSettingProps)
+    AppSettingProps appSettingProps,
+    DAVProps? davProps,
+    @Default(defaultNetworkProps) NetworkProps networkProps,
+    @Default(defaultVpnProps) VpnProps vpnProps,
+    @JsonKey(fromJson: ThemeProps.safeFromJson) required ThemeProps themeProps,
+    @Default(defaultProxiesStyleProps) ProxiesStyleProps proxiesStyleProps,
+    @Default(defaultWindowProps) WindowProps windowProps,
+    @Default(defaultClashConfig) PatchClashConfig patchClashConfig,
+    @Default([]) List<String> excludeSSIDs,
+    @Default(false) bool alwaysOn,
+  }) = _Config;
+
+  factory Config.fromJson(Map<String, Object?> json) => _$ConfigFromJson(json);
+
+  factory Config.realFromJson(Map<String, Object?>? json) {
+    if (json == null) {
+      return const Config(themeProps: defaultThemeProps);
+    }
+    return _$ConfigFromJson(json);
+  }
+}

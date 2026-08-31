@@ -1,0 +1,318 @@
+import 'dart:async';
+
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/manager/window_manager.dart';
+import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/animated_visibility.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:window_manager/window_manager.dart';
+
+class AppStateManager extends ConsumerStatefulWidget {
+  final Widget child;
+
+  const AppStateManager({super.key, required this.child});
+
+  @override
+  ConsumerState<AppStateManager> createState() => _AppStateManagerState();
+}
+
+class _AppStateManagerState extends ConsumerState<AppStateManager>
+    with WidgetsBindingObserver {
+  void _syncForegroundTickerSettings(AppSettingProps appSetting) {
+    foregroundTicker.updateSettings(
+      interval: Duration(seconds: appSetting.foregroundTickerInterval),
+      slowInterval: Duration(seconds: appSetting.foregroundTickerIdleInterval),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _syncForegroundTickerSettings(ref.read(appSettingProvider));
+    ref.listenManual(
+      appSettingProvider.select(
+        (state) => (
+          state.foregroundTickerInterval,
+          state.foregroundTickerIdleWhenUnfocused,
+          state.foregroundTickerIdleInterval,
+        ),
+      ),
+      (prev, next) {
+        final appSetting = ref.read(appSettingProvider);
+        _syncForegroundTickerSettings(appSetting);
+        if (!appSetting.foregroundTickerIdleWhenUnfocused &&
+            !globalState.isBackground.value) {
+          foregroundTicker.resume();
+        }
+      },
+    );
+    ref.listenManual(checkIpProvider, (prev, next) {
+      if (prev != next && next.a && next.c) {
+        ref.read(networkDetectionProvider.notifier).startCheck();
+      }
+    });
+    ref.listenManual(configProvider, (prev, next) {
+      if (prev != next) {
+        globalState.container
+            .read(storeActionProvider.notifier)
+            .savePreferencesDebounce();
+      }
+    });
+    ref.listenManual(needUpdateGroupsProvider, (prev, next) {
+      if (prev != next) {
+        globalState.container
+            .read(proxiesActionProvider.notifier)
+            .updateGroupsDebounce();
+      }
+    });
+    if (!system.isIOS) {
+      ref.listenManual(suspendProvider, (prev, next) {
+        final isStart = ref.read(isStartProvider);
+        if (prev != next && isStart) {
+          debouncer.call(FunctionTag.suspend, () async {
+            if (next == true) {
+              await coreController.stopListener();
+            } else {
+              await coreController.startListener();
+            }
+            ref.read(checkIpNumProvider.notifier).add();
+          });
+        }
+      });
+    }
+    if (system.isMacOS) {
+      ref.listenManual(autoSetSystemDnsStateProvider, (prev, next) async {
+        if (prev == next) {
+          return;
+        }
+        if (next.a == true && next.b == true) {
+          macOS?.updateDns(false);
+        } else {
+          macOS?.updateDns(true);
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
+    commonPrint.log('$state', logLevel: LogLevel.debug);
+    switch (state) {
+      case AppLifecycleState.inactive:
+        if (system.isDesktop) {
+          final isVisible = await windowManager.isVisible();
+          final isMinimized = await windowManager.isMinimized();
+          commonPrint.log('isVisible: $isVisible, isMinimized: $isMinimized', logLevel: LogLevel.debug);
+          if (isVisible || !isMinimized) {
+            if (ref.read(appSettingProvider).foregroundTickerIdleWhenUnfocused) {
+              foregroundTicker.slow();
+            } else {
+              foregroundTicker.resume();
+            }
+            break;
+          }
+        }
+      case AppLifecycleState.paused:
+      case AppLifecycleState.hidden:
+        await preferences.saveConfig(ref.read(configProvider));
+        globalState.handleBackground();
+        break;
+      case AppLifecycleState.resumed:
+        permissions.check();
+        globalState.handleForeground();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final ref = globalState.container;
+          ref.read(setupActionProvider.notifier).tryCheckIp();
+        });
+        break;
+      default:
+        break;
+    }
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    globalState.container.read(themeActionProvider.notifier).updateBrightness();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
+}
+
+class AppEnvManager extends StatelessWidget {
+  final Widget child;
+
+  const AppEnvManager({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (kDebugMode) {
+      if (globalState.isPre) {
+        return Banner(
+          message: 'DEBUG',
+          location: BannerLocation.topEnd,
+          child: child,
+        );
+      }
+    }
+    if (globalState.isPre) {
+      return Banner(
+        message: globalState.appEnv.toUpperCase(),
+        location: BannerLocation.topEnd,
+        child: child,
+      );
+    }
+    return child;
+  }
+}
+
+class AppSidebarContainer extends ConsumerWidget {
+  final Widget child;
+  final ValueChanged<PageLabel> onDestinationSelected;
+
+  const AppSidebarContainer({
+    super.key,
+    required this.child,
+    required this.onDestinationSelected,
+  });
+
+  Widget _buildBackground({
+    required BuildContext context,
+    required Widget child,
+  }) {
+    return Material(color: context.colorScheme.surfaceContainer, child: child);
+  }
+
+  void _updateSideBarWidth(WidgetRef ref, double contentWidth) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(sideWidthProvider.notifier).value =
+          ref.read(viewSizeProvider.select((state) => state.width)) -
+          contentWidth;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final navigationState = ref.watch(navigationStateProvider);
+    final navigationItems = navigationState.navigationItems;
+    final isMobileView = navigationState.viewMode == ViewMode.mobile;
+    final currentIndex = navigationState.currentIndex;
+    final showLabel = ref.watch(appSettingProvider).showLabel;
+    return Container(
+      color: context.colorScheme.surfaceContainer,
+      child: Row(
+        children: [
+          AnimatedVisibility.sidebar(
+            visible: !isMobileView,
+            child: _buildBackground(
+              context: context,
+              child: SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    if (system.isMacOS) const SizedBox(height: 22),
+                    const SizedBox(height: 10),
+                    if (!system.isMacOS) ...[
+                      const ClipRect(child: AppIcon()),
+                      const SizedBox(height: 12),
+                    ],
+                    Expanded(
+                      child: ScrollConfiguration(
+                        behavior: HiddenBarScrollBehavior(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: NavigationRail(
+                                scrollable: true,
+                                minExtendedWidth: 200,
+                                backgroundColor: Colors.transparent,
+                                selectedLabelTextStyle: context
+                                    .textTheme
+                                    .labelLarge!
+                                    .copyWith(
+                                      color: context.colorScheme.onSurface,
+                                    ),
+                                unselectedLabelTextStyle: context
+                                    .textTheme
+                                    .labelLarge!
+                                    .copyWith(
+                                      color: context.colorScheme.onSurface,
+                                    ),
+                                destinations: navigationItems
+                                    .map(
+                                      (e) => NavigationRailDestination(
+                                        icon: e.icon,
+                                        label: Text(Intl.message(e.label.name)),
+                                      ),
+                                    )
+                                    .toList(),
+                                onDestinationSelected: (index) {
+                                  onDestinationSelected(
+                                    navigationItems[index].label,
+                                  );
+                                },
+                                extended: false,
+                                selectedIndex: currentIndex,
+                                labelType: showLabel
+                                    ? NavigationRailLabelType.all
+                                    : NavigationRailLabelType.none,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    IconButton(
+                      onPressed: () {
+                        ref
+                            .read(appSettingProvider.notifier)
+                            .update(
+                              (state) =>
+                                  state.copyWith(showLabel: !state.showLabel),
+                            );
+                      },
+                      icon: Icon(
+                        Icons.menu,
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: ClipRect(
+              child: LayoutBuilder(
+                builder: (_, constraints) {
+                  _updateSideBarWidth(ref, constraints.maxWidth);
+                  return child;
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
