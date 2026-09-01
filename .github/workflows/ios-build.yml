@@ -1,0 +1,169 @@
+name: iOS Build and Sign
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      scheme:
+        description: 'Scheme name (optional)'
+        required: false
+  pull_request: {}
+
+jobs:
+  build:
+    name: Build, Archive and Export .ipa
+    runs-on: macos-latest
+    env:
+      APP_BUNDLE_ID: ${{ secrets.APP_BUNDLE_ID }}
+      DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+      APPLE_CERT_P12_PASSWORD: ${{ secrets.APPLE_CERT_P12_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (CocoaPods if Podfile exists)
+        run: |
+          if [ -f "Podfile" ]; then
+            sudo gem install cocoapods -v 1.15.0 || true
+            pod install --repo-update
+          else
+            echo "No Podfile, skipping pod install"
+          fi
+
+      - name: Decode and install signing files
+        env:
+          APPLE_CERT_P12: ${{ secrets.APPLE_CERT_P12 }}
+          MOBILEPROVISION: ${{ secrets.MOBILEPROVISION }}
+          APPLE_CERT_P12_PASSWORD: ${{ secrets.APPLE_CERT_P12_PASSWORD }}
+        run: |
+          set -e
+          # 解码 p12 和 mobileprovision
+          if [ -n "$APPLE_CERT_P12" ]; then
+            echo "$APPLE_CERT_P12" | base64 --decode > certificate.p12
+          else
+            echo "APPLE_CERT_P12 secret is empty, aborting"
+            exit 1
+          fi
+          if [ -n "$MOBILEPROVISION" ]; then
+            echo "$MOBILEPROVISION" | base64 --decode > profile.mobileprovision
+          else
+            echo "MOBILEPROVISION secret is empty, aborting"
+            exit 1
+          fi
+
+          # 创建可用的 keychain 并导入 p12
+          security create-keychain -p "" build.keychain || true
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security import certificate.p12 -k ~/Library/Keychains/build.keychain -P "$APPLE_CERT_P12_PASSWORD" -A || true
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" ~/Library/Keychains/build.keychain || true
+
+          # 安装 provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          PROFILE_UUID=$(grep -a -o -E '[0-9A-Fa-f\-]{36}' profile.mobileprovision | head -n 1 || true)
+          if [ -n "$PROFILE_UUID" ]; then
+            cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
+          else
+            cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+          fi
+
+      - name: Determine project/workspace and scheme
+        id: detect
+        run: |
+          set -e
+          WORKSPACE=""
+          PROJECT=""
+          SCHEME="${{ github.event.inputs.scheme }}"
+
+          # 找到 workspace 或 xcodeproj
+          ws_count=$(ls *.xcworkspace 2>/dev/null | wc -l || true)
+          proj_count=$(ls *.xcodeproj 2>/dev/null | wc -l || true)
+
+          if [ "$ws_count" -ge 1 ]; then
+            WORKSPACE=$(ls *.xcworkspace | head -n1)
+            echo "workspace=$WORKSPACE" >> $GITHUB_OUTPUT
+          elif [ "$proj_count" -ge 1 ]; then
+            PROJECT=$(ls *.xcodeproj | head -n1)
+            echo "project=$PROJECT" >> $GITHUB_OUTPUT
+          else
+            echo "No .xcworkspace or .xcodeproj found in repo root."
+            exit 1
+          fi
+
+          # 如果用户没指定 scheme，就尝试自动检测第一个 scheme
+          if [ -z "$SCHEME" ]; then
+            if [ -n "$WORKSPACE" ]; then
+              SCHEME=$(xcodebuild -workspace "$WORKSPACE" -list -json 2>/dev/null | jq -r '.schemes[0]') || true
+            else
+              SCHEME=$(xcodebuild -project "$PROJECT" -list -json 2>/dev/null | jq -r '.schemes[0]') || true
+            fi
+          fi
+
+          if [ -z "$SCHEME" ] || [ "$SCHEME" == "null" ]; then
+            echo "Could not detect scheme. Please set the scheme in workflow dispatch inputs or add a scheme to the project."
+            exit 1
+          fi
+
+          echo "scheme=$SCHEME" >> $GITHUB_OUTPUT
+
+      - name: Archive and export .ipa
+        env:
+          SCHEME: ${{ steps.detect.outputs.scheme }}
+          WORKSPACE: ${{ steps.detect.outputs.workspace }}
+          PROJECT: ${{ steps.detect.outputs.project }}
+          APP_BUNDLE_ID: ${{ secrets.APP_BUNDLE_ID }}
+          DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+          PROVISIONING_PROFILE_NAME: ${{ secrets.PROVISIONING_PROFILE_NAME }}
+        run: |
+          set -e
+          mkdir -p build
+          ARCHIVE_PATH="$PWD/build/${SCHEME}.xcarchive"
+          EXPORT_PATH="$PWD/build/export"
+          echo "Archive path: $ARCHIVE_PATH"
+
+          if [ -n "$WORKSPACE" ]; then
+            xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphoneos clean archive -archivePath "$ARCHIVE_PATH" CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_NAME"
+          else
+            xcodebuild -project "$PROJECT" -scheme "$SCHEME" -configuration Release -sdk iphoneos clean archive -archivePath "$ARCHIVE_PATH" CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_NAME"
+          fi
+
+          # 生成 exportOptionsPlist
+          cat > exportOptions.plist <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>method</key>
+  <string>ad-hoc</string>
+  <key>teamID</key>
+  <string>${DEVELOPMENT_TEAM}</string>
+  <key>provisioningProfiles</key>
+  <dict>
+    <key>${APP_BUNDLE_ID}</key>
+    <string>${PROVISIONING_PROFILE_NAME}</string>
+  </dict>
+  <key>compileBitcode</key>
+  <false/>
+</dict>
+</plist>
+EOF
+
+          xcodebuild -exportArchive -archivePath "$ARCHIVE_PATH" -exportOptionsPlist exportOptions.plist -exportPath "$EXPORT_PATH"
+
+          ls -la "$EXPORT_PATH"
+
+      - name: Upload .ipa artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: build/export/*.ipa
+
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          security delete-keychain build.keychain || true
+
+      - name: Done
+        run: echo "iOS build finished. .ipa uploaded as artifact 'ios-ipa'"
