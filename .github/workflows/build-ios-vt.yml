@@ -18,12 +18,30 @@ jobs:
 
       - name: Init submodules
         run: |
+          set -eux
+          # sync and try a normal init/update first
           git submodule sync --recursive
-          git submodule update --init --recursive --depth 1
+          git submodule update --init --recursive || true
+
+          # Try a shallow update (faster) but fall back to full update if it didn't populate directories
+          git submodule update --init --recursive --depth 1 || true
+
+          echo "=== repo root listing ==="
+          ls -la || true
+
           echo "=== core dir listing ==="
           ls -la core || true
           echo "=== core/mihomo dir listing ==="
           ls -la core/mihomo || true
+
+          # If the submodule directory is still missing or empty, clone it as a fallback so 'go build' can find the replace path
+          if [ ! -d core/mihomo ] || [ -z "$(ls -A core/mihomo 2>/dev/null || true)" ]; then
+            echo "core/mihomo submodule not initialized or empty, attempting fallback clone"
+            rm -rf core/mihomo
+            git clone --depth 1 https://github.com/chenx-dust/mihomo.git core/mihomo || true
+            echo "after fallback clone listing:"
+            ls -la core/mihomo || true
+          fi
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -38,7 +56,16 @@ jobs:
 
       - name: Go core build check
         working-directory: core
-        run: go build .
+        run: |
+          set -eux
+          echo "=== core working dir ==="
+          pwd
+          ls -la
+          echo "go.mod contents:" 
+          sed -n '1,200p' go.mod || true
+          go env
+          go list -m all || true
+          go build .
 
       - name: Flutter pub get
         run: flutter pub get
