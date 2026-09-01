@@ -43,6 +43,18 @@ jobs:
             ls -la core/mihomo || true
           fi
 
+          echo "=== core/sing-shadowsocks2 dir listing ==="
+          ls -la core/sing-shadowsocks2 || true
+
+          # Fallback clone for sing-shadowsocks2 submodule if it's missing or empty
+          if [ ! -d core/sing-shadowsocks2 ] || [ -z "$(ls -A core/sing-shadowsocks2 2>/dev/null || true)" ]; then
+            echo "core/sing-shadowsocks2 submodule not initialized or empty, attempting fallback clone"
+            rm -rf core/sing-shadowsocks2
+            git clone --depth 1 https://github.com/metacubex/sing-shadowsocks2.git core/sing-shadowsocks2 || true
+            echo "after fallback clone listing:"
+            ls -la core/sing-shadowsocks2 || true
+          fi
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
