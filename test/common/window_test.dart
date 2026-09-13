@@ -1,4 +1,6 @@
 import 'package:fl_clash/common/window.dart';
+import 'package:fl_clash/common/function.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/services.dart';
@@ -17,6 +19,8 @@ void main() {
   late Rect bounds;
 
   setUp(() {
+    debouncer.cancel(FunctionTag.background);
+    throttler.cancel(FunctionTag.foreground);
     calls = <String>[];
     isVisible = true;
     isMaximized = false;
@@ -44,6 +48,8 @@ void main() {
   });
 
   tearDown(() {
+    debouncer.cancel(FunctionTag.background);
+    throttler.cancel(FunctionTag.foreground);
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_windowChannel, null);
   });
@@ -70,6 +76,8 @@ void main() {
     await Window().hide();
 
     expect(calls, containsAllInOrder(<String>['hide', 'setSkipTaskbar']));
+    expect(globalState.isBackground.value, isTrue);
+    await Future<void>.delayed(const Duration(milliseconds: 1100));
     expect(globalState.isBackground.value, isTrue);
   });
 

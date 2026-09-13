@@ -297,6 +297,8 @@ enum FunctionTag {
   suspend,
   coreErrorNotifier,
   handleBack,
+  foreground,
+  background,
 }
 
 enum DashboardWidget {

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/app_ports.dart';
+import 'package:fl_clash/common/function.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/window_manager.dart';
 import 'package:fl_clash/models/config.dart';
@@ -90,6 +92,8 @@ void main() {
   });
 
   setUp(() {
+    debouncer.cancel(FunctionTag.background);
+    throttler.cancel(FunctionTag.foreground);
     _RecordingSystemAction.calls.clear();
     windowCalls = [];
     isAlwaysOnTop = false;
@@ -121,6 +125,8 @@ void main() {
   });
 
   tearDown(() {
+    debouncer.cancel(FunctionTag.background);
+    throttler.cancel(FunctionTag.foreground);
     windowPort = null;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(_windowChannel, null);
@@ -212,6 +218,8 @@ void main() {
     final listener = await pumpWindowManager(tester);
 
     listener.onWindowMinimize();
+    expect(globalState.isBackground.value, isTrue);
+    await tester.pump(const Duration(milliseconds: 1100));
     expect(globalState.isBackground.value, isTrue);
     listener.onWindowRestore();
     expect(globalState.isBackground.value, isFalse);

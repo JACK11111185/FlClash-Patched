@@ -5,7 +5,7 @@ void main() {
   group('ForegroundTicker', () {
     const interval = Duration(milliseconds: 50);
 
-    test('pause is debounced before stopping immediate task runs', () async {
+    test('pause stops immediate task runs', () async {
       final ticker = ForegroundTicker(interval: interval);
       var runs = 0;
 
@@ -13,19 +13,21 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 10));
       ticker.register(Object(), () => runs++, fire: true);
 
-      expect(runs, 1);
+      expect(runs, 0);
       ticker.dispose();
     });
 
-    test('pause eventually stops immediate task runs', () async {
+    test('pause stops an active ticker', () async {
       final ticker = ForegroundTicker(interval: interval);
       var runs = 0;
 
-      ticker.pause();
-      await Future<void>.delayed(const Duration(milliseconds: 100));
       ticker.register(Object(), () => runs++, fire: true);
+      await Future<void>.delayed(const Duration(milliseconds: 70));
+      ticker.pause();
+      final pausedRuns = runs;
+      await Future<void>.delayed(const Duration(milliseconds: 100));
 
-      expect(runs, 0);
+      expect(runs, pausedRuns);
       ticker.dispose();
     });
 

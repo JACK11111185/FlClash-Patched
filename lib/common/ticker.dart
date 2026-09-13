@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'function.dart';
 import 'print.dart';
 
 typedef ForegroundTickerCallback = FutureOr<void> Function();
@@ -8,8 +7,6 @@ typedef ForegroundTickerCallback = FutureOr<void> Function();
 class ForegroundTicker {
   static const _defaultInterval = Duration(seconds: 1);
   static const _defaultSlowInterval = Duration(seconds: 2);
-  static const _pauseTag = 'ForegroundTicker.pause';
-  static const _resumeTag = 'ForegroundTicker.resume';
 
   Duration _interval;
   Duration _slowInterval;
@@ -62,8 +59,10 @@ class ForegroundTicker {
   }
 
   void pause() {
-    throttler.cancel(_resumeTag);
-    debouncer.call(_pauseTag, _pause, duration: interval);
+    if (!_active) return;
+    _active = false;
+    _timer?.cancel();
+    _timer = null;
   }
 
   void slow() {
@@ -73,25 +72,6 @@ class ForegroundTicker {
   }
 
   void resume() {
-    debouncer.cancel(_pauseTag);
-    throttler.call(_resumeTag, _resume, duration: interval, fire: true);
-  }
-
-  void dispose() {
-    debouncer.cancel(_pauseTag);
-    throttler.cancel(_resumeTag);
-    _pause();
-    _tasks.clear();
-  }
-
-  void _pause() {
-    if (!_active) return;
-    _active = false;
-    _timer?.cancel();
-    _timer = null;
-  }
-
-  void _resume() {
     final wasActive = _active;
     final wasSlow = _currentInterval != interval;
     _active = true;
@@ -99,6 +79,11 @@ class ForegroundTicker {
     if (!wasActive || wasSlow) {
       _tick();
     }
+  }
+
+  void dispose() {
+    pause();
+    _tasks.clear();
   }
 
   void _syncTimer() {

@@ -49,6 +49,7 @@ void main(List<String> args) {
         }
         HttpOverrides.global = FlClashHttpOverrides(container);
         request.attach(container.read);
+        PaintingBinding.instance.imageCache.maximumSizeBytes = 64 * 1024 * 1024;
         runApp(
           UncontrolledProviderScope(
             container: container,

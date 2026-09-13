@@ -48,19 +48,38 @@ class GlobalState {
       .read(patchClashConfigProvider.select((state) => state.globalUa))
       .takeFirstValid([packageInfo.ua]);
 
-  void handleBackground() {
-    if (isBackground.value) return;
-    isBackground.value = true;
+  void _handleBackground() {
     foregroundTicker.pause();
     render?.pause();
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
+    WidgetsBinding.instance.handleMemoryPressure();
+  }
+
+  void _handleForeground() {
+    foregroundTicker.resume();
+    render?.resume();
+  }
+
+  void handleBackground() {
+    isBackground.value = true;
+    throttler.cancel(FunctionTag.foreground);
+    debouncer.call(
+      FunctionTag.background,
+      _handleBackground,
+      duration: foregroundTicker.interval,
+    );
   }
 
   void handleForeground() {
-    if (isBackground.value) {
-      isBackground.value = false;
-    }
-    foregroundTicker.resume();
-    render?.resume();
+    isBackground.value = false;
+    debouncer.cancel(FunctionTag.background);
+    throttler.call(
+      FunctionTag.foreground,
+      _handleForeground,
+      duration: foregroundTicker.interval,
+      fire: true,
+    );
   }
 
   Future<T?> loadingRun<T>(

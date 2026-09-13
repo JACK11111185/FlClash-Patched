@@ -50,7 +50,7 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
         _syncForegroundTickerSettings(appSetting);
         if (!appSetting.foregroundTickerIdleWhenUnfocused &&
             !globalState.isBackground.value) {
-          foregroundTicker.resume();
+          globalState.handleForeground();
         }
       },
     );
@@ -96,6 +96,8 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    debouncer.cancel(FunctionTag.background);
+    throttler.cancel(FunctionTag.foreground);
     super.dispose();
   }
 
@@ -112,8 +114,6 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
                 .read(appSettingProvider)
                 .foregroundTickerIdleWhenUnfocused) {
               foregroundTicker.slow();
-            } else {
-              foregroundTicker.resume();
             }
             break;
           }
