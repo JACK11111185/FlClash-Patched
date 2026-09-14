@@ -777,8 +777,8 @@
   "easyTierConnectionLatency": "Задержка соединения",
   "easyTierPathLatency": "Задержка пути (приоритет числа переходов)",
   "easyTierLatencyFirstPathLatency": "Задержка пути (приоритет задержки)",
-  "recvMsgX": "Включить recvmsg_x",
-  "recvMsgXDesc": "Пакетный приём пакетов TUN в macOS и iOS; в iOS возможен сбой при превышении лимита памяти",
-  "sendMsgX": "Включить sendmsg_x",
+  "recvMsgX": "Включить RecvMsgX",
+  "recvMsgXDesc": "Пакетный приём пакетов TUN в macOS и iOS",
+  "sendMsgX": "Включить SendMsgX",
   "sendMsgXDesc": "Пакетная отправка пакетов TUN в macOS и iOS; возможны зависания ядра при многопоточной загрузке"
 }

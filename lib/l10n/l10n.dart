@@ -6510,30 +6510,30 @@ class AppLocalizations {
     );
   }
 
-  /// `Enable recvmsg_x`
+  /// `Enable RecvMsgX`
   String get recvMsgX {
     return Intl.message(
-      'Enable recvmsg_x',
+      'Enable RecvMsgX',
       name: 'recvMsgX',
       desc: '',
       args: [],
     );
   }
 
-  /// `Receive TUN packets in batches on macOS and iOS; may crash on iOS if memory usage exceeds the limit`
+  /// `Receive TUN packets in batches on macOS and iOS`
   String get recvMsgXDesc {
     return Intl.message(
-      'Receive TUN packets in batches on macOS and iOS; may crash on iOS if memory usage exceeds the limit',
+      'Receive TUN packets in batches on macOS and iOS',
       name: 'recvMsgXDesc',
       desc: '',
       args: [],
     );
   }
 
-  /// `Enable sendmsg_x`
+  /// `Enable SendMsgX`
   String get sendMsgX {
     return Intl.message(
-      'Enable sendmsg_x',
+      'Enable SendMsgX',
       name: 'sendMsgX',
       desc: '',
       args: [],

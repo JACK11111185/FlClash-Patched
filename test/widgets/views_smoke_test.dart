@@ -321,7 +321,7 @@ void main() {
         expect(find.text('zerotier'), findsOneWidget);
         expect(find.text('device'), findsNothing);
         expect(find.text('1234567890'), findsNothing);
-        expect(find.textContaining('example.com'), findsOneWidget);
+        expect(find.textContaining('example.com'), findsNothing);
         expect(networkingRequests, hasLength(1));
         expect(networkingRequests.single.targets, hasLength(2));
         expect(

@@ -1080,9 +1080,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "quickFill": MessageLookupByLibrary.simpleMessage("Quick fill"),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("Rainbow"),
     "random": MessageLookupByLibrary.simpleMessage("Random"),
-    "recvMsgX": MessageLookupByLibrary.simpleMessage("Enable recvmsg_x"),
+    "recvMsgX": MessageLookupByLibrary.simpleMessage("Enable RecvMsgX"),
     "recvMsgXDesc": MessageLookupByLibrary.simpleMessage(
-      "Receive TUN packets in batches on macOS and iOS; may crash on iOS if memory usage exceeds the limit",
+      "Receive TUN packets in batches on macOS and iOS",
     ),
     "redirPort": MessageLookupByLibrary.simpleMessage("Redir port"),
     "redo": MessageLookupByLibrary.simpleMessage("Redo"),
@@ -1308,7 +1308,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "selected": MessageLookupByLibrary.simpleMessage("Selected"),
     "selectedCountTitle": m29,
-    "sendMsgX": MessageLookupByLibrary.simpleMessage("Enable sendmsg_x"),
+    "sendMsgX": MessageLookupByLibrary.simpleMessage("Enable SendMsgX"),
     "sendMsgXDesc": MessageLookupByLibrary.simpleMessage(
       "Send TUN packets in batches on macOS and iOS; may cause the kernel to freeze during multi-threaded downloads",
     ),

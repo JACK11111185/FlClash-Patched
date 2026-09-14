@@ -788,9 +788,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "quickFill": MessageLookupByLibrary.simpleMessage("一键填入"),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("彩虹"),
     "random": MessageLookupByLibrary.simpleMessage("随机"),
-    "recvMsgX": MessageLookupByLibrary.simpleMessage("启用 recvmsg_x"),
+    "recvMsgX": MessageLookupByLibrary.simpleMessage("启用 RecvMsgX"),
     "recvMsgXDesc": MessageLookupByLibrary.simpleMessage(
-      "在 macOS 和 iOS 上批量接收 TUN 数据包；iOS 下可能因内存占用超限崩溃",
+      "在 macOS 和 iOS 上批量接收 TUN 数据包",
     ),
     "redirPort": MessageLookupByLibrary.simpleMessage("Redir 端口"),
     "redo": MessageLookupByLibrary.simpleMessage("重做"),
@@ -952,7 +952,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectSubRule": MessageLookupByLibrary.simpleMessage("请选择子规则"),
     "selected": MessageLookupByLibrary.simpleMessage("已选择"),
     "selectedCountTitle": m29,
-    "sendMsgX": MessageLookupByLibrary.simpleMessage("启用 sendmsg_x"),
+    "sendMsgX": MessageLookupByLibrary.simpleMessage("启用 SendMsgX"),
     "sendMsgXDesc": MessageLookupByLibrary.simpleMessage(
       "在 macOS 和 iOS 上批量发送 TUN 数据包；多线程下载时可能导致内核卡住",
     ),

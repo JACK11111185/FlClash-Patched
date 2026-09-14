@@ -1131,9 +1131,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "quickFill": MessageLookupByLibrary.simpleMessage("Быстрое заполнение"),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("Радуга"),
     "random": MessageLookupByLibrary.simpleMessage("Случайный"),
-    "recvMsgX": MessageLookupByLibrary.simpleMessage("Включить recvmsg_x"),
+    "recvMsgX": MessageLookupByLibrary.simpleMessage("Включить RecvMsgX"),
     "recvMsgXDesc": MessageLookupByLibrary.simpleMessage(
-      "Пакетный приём пакетов TUN в macOS и iOS; в iOS возможен сбой при превышении лимита памяти",
+      "Пакетный приём пакетов TUN в macOS и iOS",
     ),
     "redirPort": MessageLookupByLibrary.simpleMessage("Порт Redir"),
     "redo": MessageLookupByLibrary.simpleMessage("Повторить"),
@@ -1371,7 +1371,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "selected": MessageLookupByLibrary.simpleMessage("Выбрано"),
     "selectedCountTitle": m29,
-    "sendMsgX": MessageLookupByLibrary.simpleMessage("Включить sendmsg_x"),
+    "sendMsgX": MessageLookupByLibrary.simpleMessage("Включить SendMsgX"),
     "sendMsgXDesc": MessageLookupByLibrary.simpleMessage(
       "Пакетная отправка пакетов TUN в macOS и iOS; возможны зависания ядра при многопоточной загрузке",
     ),
