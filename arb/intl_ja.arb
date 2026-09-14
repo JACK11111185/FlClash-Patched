@@ -760,5 +760,21 @@
   "tailscaleNeedsMachineAuth": "デバイスの承認が必要",
   "networking": "メッシュネットワーク",
   "networkingDesc": "P2P ネットワークの状態を表示",
-  "networkingNoOutbounds": "現在の設定に P2P アウトバウンドはありません"
+  "networkingNoOutbounds": "現在の設定に P2P アウトバウンドはありません",
+  "easyTierPeerId": "ピア ID",
+  "easyTierInstanceId": "インスタンス ID",
+  "easyTierDnsZone": "DNS ゾーン",
+  "easyTierNextHop": "ネクストホップのピア ID",
+  "easyTierRouteCost": "ルートコスト",
+  "easyTierProtocol": "トランスポートプロトコル",
+  "easyTierLocalEndpoint": "ローカルエンドポイント",
+  "easyTierRemoteEndpoint": "リモートエンドポイント",
+  "easyTierLossRate": "パケット損失率",
+  "easyTierRxPackets": "受信パケット数",
+  "easyTierTxPackets": "送信パケット数",
+  "easyTierListeners": "リッスンアドレス",
+  "easyTierMinDirectLatency": "最小直接接続遅延",
+  "easyTierConnectionLatency": "接続遅延",
+  "easyTierPathLatency": "経路遅延（ホップ数優先）",
+  "easyTierLatencyFirstPathLatency": "経路遅延（遅延優先）"
 }

@@ -465,6 +465,38 @@ class MessageLookup extends MessageLookupByLibrary {
     "download": MessageLookupByLibrary.simpleMessage("Download"),
     "downloadSpeed": MessageLookupByLibrary.simpleMessage("Download speed"),
     "downloadTraffic": MessageLookupByLibrary.simpleMessage("Download traffic"),
+    "easyTierConnectionLatency": MessageLookupByLibrary.simpleMessage(
+      "Connection latency",
+    ),
+    "easyTierDnsZone": MessageLookupByLibrary.simpleMessage("DNS zone"),
+    "easyTierInstanceId": MessageLookupByLibrary.simpleMessage("Instance ID"),
+    "easyTierLatencyFirstPathLatency": MessageLookupByLibrary.simpleMessage(
+      "Path latency (latency first)",
+    ),
+    "easyTierListeners": MessageLookupByLibrary.simpleMessage("Listeners"),
+    "easyTierLocalEndpoint": MessageLookupByLibrary.simpleMessage(
+      "Local endpoint",
+    ),
+    "easyTierLossRate": MessageLookupByLibrary.simpleMessage("Packet loss"),
+    "easyTierMinDirectLatency": MessageLookupByLibrary.simpleMessage(
+      "Minimum direct latency",
+    ),
+    "easyTierNextHop": MessageLookupByLibrary.simpleMessage("Next-hop peer ID"),
+    "easyTierPathLatency": MessageLookupByLibrary.simpleMessage(
+      "Path latency (hop-count first)",
+    ),
+    "easyTierPeerId": MessageLookupByLibrary.simpleMessage("Peer ID"),
+    "easyTierProtocol": MessageLookupByLibrary.simpleMessage(
+      "Transport protocol",
+    ),
+    "easyTierRemoteEndpoint": MessageLookupByLibrary.simpleMessage(
+      "Remote endpoint",
+    ),
+    "easyTierRouteCost": MessageLookupByLibrary.simpleMessage("Route cost"),
+    "easyTierRxPackets": MessageLookupByLibrary.simpleMessage(
+      "Received packets",
+    ),
+    "easyTierTxPackets": MessageLookupByLibrary.simpleMessage("Sent packets"),
     "edit": MessageLookupByLibrary.simpleMessage("Edit"),
     "editGlobalRules": MessageLookupByLibrary.simpleMessage(
       "Edit global rules",
@@ -703,9 +735,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Enter the rule content",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "This system hides the installed app list until the permission is granted. Authorize it to configure the per-app proxy.",
     ),

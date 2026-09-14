@@ -6354,6 +6354,161 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Peer ID`
+  String get easyTierPeerId {
+    return Intl.message('Peer ID', name: 'easyTierPeerId', desc: '', args: []);
+  }
+
+  /// `Instance ID`
+  String get easyTierInstanceId {
+    return Intl.message(
+      'Instance ID',
+      name: 'easyTierInstanceId',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS zone`
+  String get easyTierDnsZone {
+    return Intl.message(
+      'DNS zone',
+      name: 'easyTierDnsZone',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Next-hop peer ID`
+  String get easyTierNextHop {
+    return Intl.message(
+      'Next-hop peer ID',
+      name: 'easyTierNextHop',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Route cost`
+  String get easyTierRouteCost {
+    return Intl.message(
+      'Route cost',
+      name: 'easyTierRouteCost',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Transport protocol`
+  String get easyTierProtocol {
+    return Intl.message(
+      'Transport protocol',
+      name: 'easyTierProtocol',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local endpoint`
+  String get easyTierLocalEndpoint {
+    return Intl.message(
+      'Local endpoint',
+      name: 'easyTierLocalEndpoint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Remote endpoint`
+  String get easyTierRemoteEndpoint {
+    return Intl.message(
+      'Remote endpoint',
+      name: 'easyTierRemoteEndpoint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Packet loss`
+  String get easyTierLossRate {
+    return Intl.message(
+      'Packet loss',
+      name: 'easyTierLossRate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Received packets`
+  String get easyTierRxPackets {
+    return Intl.message(
+      'Received packets',
+      name: 'easyTierRxPackets',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sent packets`
+  String get easyTierTxPackets {
+    return Intl.message(
+      'Sent packets',
+      name: 'easyTierTxPackets',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Listeners`
+  String get easyTierListeners {
+    return Intl.message(
+      'Listeners',
+      name: 'easyTierListeners',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Minimum direct latency`
+  String get easyTierMinDirectLatency {
+    return Intl.message(
+      'Minimum direct latency',
+      name: 'easyTierMinDirectLatency',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connection latency`
+  String get easyTierConnectionLatency {
+    return Intl.message(
+      'Connection latency',
+      name: 'easyTierConnectionLatency',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Path latency (hop-count first)`
+  String get easyTierPathLatency {
+    return Intl.message(
+      'Path latency (hop-count first)',
+      name: 'easyTierPathLatency',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Path latency (latency first)`
+  String get easyTierLatencyFirstPathLatency {
+    return Intl.message(
+      'Path latency (latency first)',
+      name: 'easyTierLatencyFirstPathLatency',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -6,6 +6,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/networking/tailscale.dart';
 import 'package:fl_clash/views/networking/zerotier.dart';
+import 'package:fl_clash/views/networking/easytier.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -83,9 +84,12 @@ class _NetworkingViewState extends ConsumerState<NetworkingView>
   }
 
   OverlayNetworkKind _kind(_NetworkingProxy proxy) {
-    return proxy.type == 'tailscale'
-        ? OverlayNetworkKind.tailscale
-        : OverlayNetworkKind.zerotier;
+    return switch (proxy.type) {
+      'tailscale' => OverlayNetworkKind.tailscale,
+      'zerotier' => OverlayNetworkKind.zerotier,
+      'easytier' => OverlayNetworkKind.easytier,
+      _ => throw StateError('Unsupported overlay network: ${proxy.type}'),
+    };
   }
 
   OverlayNetworkTarget _target(
@@ -126,7 +130,7 @@ class _NetworkingViewState extends ConsumerState<NetworkingView>
     for (final group in groups) {
       for (final proxy in group.all) {
         final type = proxy.type.toLowerCase();
-        if (type != 'tailscale' && type != 'zerotier') {
+        if (type != 'tailscale' && type != 'zerotier' && type != 'easytier') {
           continue;
         }
         final item = (name: proxy.name, type: type);
@@ -406,7 +410,9 @@ class _NetworkingViewState extends ConsumerState<NetworkingView>
   String _summary(BuildContext context, OverlayNetworkStatus status) {
     return [
       _stateLabel(context, status),
-      if (status.networkName.isNotEmpty) status.networkName,
+      if (status.state != OverlayNetworkState.uninitialized &&
+          status.networkName.isNotEmpty)
+        status.networkName,
     ].join(' · ');
   }
 
@@ -509,6 +515,16 @@ class _NetworkingViewState extends ConsumerState<NetworkingView>
         ),
       ];
     }
+    final easyTierDetails = status?.easyTierDetails;
+    if (status != null && easyTierDetails != null) {
+      return buildEasyTierChildren(
+        context: context,
+        status: status,
+        details: easyTierDetails,
+        statusErrorItem: statusErrorItem,
+        activationItem: activationItem,
+      );
+    }
     final zeroTierDetails = status?.zeroTierDetails;
     if (status != null && zeroTierDetails != null) {
       return [
@@ -533,7 +549,11 @@ class _NetworkingViewState extends ConsumerState<NetworkingView>
     final key = _key(proxy);
     final status = _statuses[key];
     final error = _requestErrors[key];
-    final protocol = proxy.type == 'tailscale' ? 'Tailscale' : 'ZeroTier';
+    final protocol = switch (_kind(proxy)) {
+      OverlayNetworkKind.tailscale => 'Tailscale',
+      OverlayNetworkKind.zerotier => 'ZeroTier',
+      OverlayNetworkKind.easytier => 'EasyTier',
+    };
     final summary = status == null ? null : _summary(context, status);
     return Material(
       type: MaterialType.transparency,

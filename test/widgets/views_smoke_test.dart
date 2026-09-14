@@ -120,6 +120,9 @@ void main() {
           return [
             for (final target in params.targets)
               switch (target.kind) {
+                OverlayNetworkKind.easytier => throw StateError(
+                  'Unexpected EasyTier target',
+                ),
                 OverlayNetworkKind.tailscale => OverlayNetworkStatus(
                   name: target.name,
                   kind: target.kind,
@@ -161,6 +164,19 @@ void main() {
                                     self: false,
                                     exitNode: false,
                                     exitNodeOption: true,
+                                    expired: false,
+                                  ),
+                                  TailscaleNode(
+                                    id: 'local-node',
+                                    hostName: 'local-device',
+                                    dnsName: 'local-device.example.com.',
+                                    os: 'linux',
+                                    ips: ['100.64.0.2'],
+                                    online: true,
+                                    active: true,
+                                    self: true,
+                                    exitNode: false,
+                                    exitNodeOption: false,
                                     expired: false,
                                   ),
                                 ],
@@ -373,6 +389,19 @@ void main() {
           ),
         ).called(1);
         expect(find.text('device'), findsOneWidget);
+        expect(find.text('local-device'), findsOneWidget);
+        expect(
+          tester.getTopLeft(find.text('Local').first).dy,
+          lessThan(tester.getTopLeft(find.text('local-device')).dy),
+        );
+        expect(
+          tester.getTopLeft(find.text('local-device')).dy,
+          lessThan(tester.getTopLeft(find.text('Nodes')).dy),
+        );
+        expect(
+          tester.getTopLeft(find.text('Nodes')).dy,
+          lessThan(tester.getTopLeft(find.text('device')).dy),
+        );
         expect(find.byIcon(Icons.desktop_windows_outlined), findsOneWidget);
         expect(find.byIcon(Icons.bolt), findsOneWidget);
         await tester.tap(find.byIcon(Icons.bolt));

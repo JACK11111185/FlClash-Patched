@@ -14,7 +14,7 @@ NavigationItemsState navigationItemsState(Ref ref) {
       (groups) => groups.any(
         (group) => group.all.any(
           (proxy) => switch (proxy.type.toLowerCase()) {
-            'tailscale' || 'zerotier' => true,
+            'tailscale' || 'zerotier' || 'easytier' => true,
             _ => false,
           },
         ),

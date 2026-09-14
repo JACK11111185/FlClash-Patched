@@ -384,7 +384,138 @@ class ZeroTierNetworkDetails {
   }
 }
 
-enum OverlayNetworkKind { tailscale, zerotier }
+class EasyTierNode {
+  final int? pathLatencyMs;
+  final int? latencyFirstPathLatencyMs;
+  final int peerId;
+  final String instanceId;
+  final String version;
+  final int nextHop;
+  final int cost;
+  final String connectionType;
+  final String hostname;
+  final String ipv4;
+  final int latencyMs;
+  final List<String> proxyCidrs;
+  final List<String> listeners;
+  final List<EasyTierConnection> connections;
+
+  const EasyTierNode({
+    this.pathLatencyMs,
+    this.latencyFirstPathLatencyMs,
+    this.peerId = 0,
+    this.instanceId = '',
+    this.version = '',
+    this.nextHop = 0,
+    this.cost = 0,
+    this.connectionType = '',
+    this.hostname = '',
+    this.ipv4 = '',
+    this.latencyMs = 0,
+    this.proxyCidrs = const [],
+    this.listeners = const [],
+    this.connections = const [],
+  });
+
+  factory EasyTierNode.fromJson(Map<String, Object?> json) {
+    return EasyTierNode(
+      pathLatencyMs: json['path-latency-ms'] as int?,
+      latencyFirstPathLatencyMs: json['latency-first-path-latency-ms'] as int?,
+      peerId: json['peer-id'] as int? ?? 0,
+      instanceId: json['instance-id'] as String? ?? '',
+      version: json['version'] as String? ?? '',
+      nextHop: json['next-hop'] as int? ?? 0,
+      cost: json['cost'] as int? ?? 0,
+      connectionType: json['connection-type'] as String? ?? '',
+      hostname: json['hostname'] as String? ?? '',
+      ipv4: json['ipv4'] as String? ?? '',
+      latencyMs: json['latency-ms'] as int? ?? 0,
+      proxyCidrs: (json['proxy-cidrs'] as List? ?? [])
+          .whereType<String>()
+          .toList(),
+      listeners: (json['listeners'] as List? ?? [])
+          .whereType<String>()
+          .toList(),
+      connections: (json['connections'] as List? ?? [])
+          .whereType<Map>()
+          .map(
+            (item) =>
+                EasyTierConnection.fromJson(Map<String, Object?>.from(item)),
+          )
+          .toList(),
+    );
+  }
+}
+
+class EasyTierConnection {
+  final String id;
+  final String protocol;
+  final String localEndpoint;
+  final String remoteEndpoint;
+  final int latencyMs;
+  final int? rxBytes;
+  final int? txBytes;
+  final int? rxPackets;
+  final int? txPackets;
+  final num? lossRate;
+  const EasyTierConnection({
+    this.id = '',
+    this.protocol = '',
+    this.localEndpoint = '',
+    this.remoteEndpoint = '',
+    this.latencyMs = 0,
+    this.rxBytes,
+    this.txBytes,
+    this.rxPackets,
+    this.txPackets,
+    this.lossRate,
+  });
+  factory EasyTierConnection.fromJson(Map<String, Object?> json) {
+    return EasyTierConnection(
+      id: json['id'] as String? ?? '',
+      protocol: json['protocol'] as String? ?? '',
+      localEndpoint: json['local-endpoint'] as String? ?? '',
+      remoteEndpoint: json['remote-endpoint'] as String? ?? '',
+      latencyMs: json['latency-ms'] as int? ?? 0,
+      rxBytes: json['rx-bytes'] as int?,
+      txBytes: json['tx-bytes'] as int?,
+      rxPackets: json['rx-packets'] as int?,
+      txPackets: json['tx-packets'] as int?,
+      lossRate: json['loss-rate'] as num?,
+    );
+  }
+}
+
+class EasyTierNetworkDetails {
+  final String instanceId;
+  final String dnsZone;
+  final EasyTierNode local;
+  final List<EasyTierNode> peers;
+
+  const EasyTierNetworkDetails({
+    this.instanceId = '',
+    this.dnsZone = '',
+    this.local = const EasyTierNode(),
+    this.peers = const [],
+  });
+
+  factory EasyTierNetworkDetails.fromJson(Map<String, Object?> json) {
+    final local = json['local'];
+    return EasyTierNetworkDetails(
+      instanceId: json['instance-id'] as String? ?? '',
+      dnsZone: json['dns-zone'] as String? ?? '',
+      local: local is Map
+          ? EasyTierNode.fromJson(Map<String, Object?>.from(local))
+          : const EasyTierNode(),
+      peers: (json['peers'] as List? ?? [])
+          .whereType<Map>()
+          .map((item) => EasyTierNode.fromJson(Map<String, Object?>.from(item)))
+          .toList(),
+    );
+  }
+}
+
+enum OverlayNetworkKind { tailscale, zerotier, easytier }
 
 enum OverlayNetworkDetailLevel { summary, details }
 
@@ -445,6 +576,7 @@ class OverlayNetworkStatus {
   final String error;
   final TailscaleNetworkDetails? tailscaleDetails;
   final ZeroTierNetworkDetails? zeroTierDetails;
+  final EasyTierNetworkDetails? easyTierDetails;
 
   const OverlayNetworkStatus({
     required this.name,
@@ -456,14 +588,19 @@ class OverlayNetworkStatus {
     required this.error,
     this.tailscaleDetails,
     this.zeroTierDetails,
+    this.easyTierDetails,
   });
 
-  bool get hasDetails => tailscaleDetails != null || zeroTierDetails != null;
+  bool get hasDetails =>
+      tailscaleDetails != null ||
+      zeroTierDetails != null ||
+      easyTierDetails != null;
 
   factory OverlayNetworkStatus.fromJson(Map<String, Object?> json) {
     final kind = switch (json['kind']) {
       'tailscale' => OverlayNetworkKind.tailscale,
       'zerotier' => OverlayNetworkKind.zerotier,
+      'easytier' => OverlayNetworkKind.easytier,
       _ => throw FormatException(
         'Unknown overlay network kind: ${json['kind']}',
       ),
@@ -494,6 +631,9 @@ class OverlayNetworkStatus {
           kind == OverlayNetworkKind.tailscale && detailsMap != null
           ? TailscaleNetworkDetails.fromJson(detailsMap)
           : null,
+      easyTierDetails: kind == OverlayNetworkKind.easytier && detailsMap != null
+          ? EasyTierNetworkDetails.fromJson(detailsMap)
+          : null,
       zeroTierDetails: kind == OverlayNetworkKind.zerotier && detailsMap != null
           ? ZeroTierNetworkDetails.fromJson(detailsMap)
           : null,
@@ -514,6 +654,7 @@ class OverlayNetworkStatus {
       error: error,
       tailscaleDetails: previous.tailscaleDetails,
       zeroTierDetails: previous.zeroTierDetails,
+      easyTierDetails: previous.easyTierDetails,
     );
   }
 }

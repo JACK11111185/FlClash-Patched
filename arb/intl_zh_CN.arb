@@ -760,5 +760,21 @@
   "tailscaleNeedsMachineAuth": "需要批准设备",
   "networking": "组网",
   "networkingDesc": "查看点对点组网状态",
-  "networkingNoOutbounds": "当前配置中没有点对点组网出站"
+  "networkingNoOutbounds": "当前配置中没有点对点组网出站",
+  "easyTierPeerId": "节点 ID",
+  "easyTierInstanceId": "实例 ID",
+  "easyTierDnsZone": "DNS 域",
+  "easyTierNextHop": "下一跳节点 ID",
+  "easyTierRouteCost": "路由代价",
+  "easyTierProtocol": "传输协议",
+  "easyTierLocalEndpoint": "本地端点",
+  "easyTierRemoteEndpoint": "远端端点",
+  "easyTierLossRate": "丢包率",
+  "easyTierRxPackets": "接收包数",
+  "easyTierTxPackets": "发送包数",
+  "easyTierListeners": "监听地址",
+  "easyTierMinDirectLatency": "最低直连延迟",
+  "easyTierConnectionLatency": "连接延迟",
+  "easyTierPathLatency": "路径延迟（跳数优先）",
+  "easyTierLatencyFirstPathLatency": "路径延迟（延迟优先）"
 }

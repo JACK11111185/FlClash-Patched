@@ -17,6 +17,16 @@ List<Widget> buildTailscaleChildren({
   required Widget? activationItem,
 }) {
   final appLocalizations = context.appLocalizations;
+  final localNodes = details.nodes.where((node) => node.self).toList();
+  final peers = details.nodes.where((node) => !node.self).toList();
+
+  Widget buildNode(TailscaleNode node) => _TailscaleNodeItem(
+    key: ValueKey('${status.name}\u0000${node.id}'),
+    controller: controller,
+    proxyName: status.name,
+    node: node,
+    displayName: _tailscaleNodeDisplayName(node, details.magicDnsSuffix),
+  );
   return [
     ...generateSection(
       isFirst: true,
@@ -45,21 +55,18 @@ List<Widget> buildTailscaleChildren({
           ),
       ],
     ),
+    if (localNodes.isNotEmpty)
+      ...generateSection(
+        title: appLocalizations.local,
+        isFirst: true,
+        items: [for (final node in localNodes) buildNode(node)],
+      ),
     ...generateSection(
       title: appLocalizations.nodes,
       isFirst: true,
       items: [
-        for (final node in details.nodes)
-          _TailscaleNodeItem(
-            key: ValueKey('${status.name}\u0000${node.id}'),
-            controller: controller,
-            proxyName: status.name,
-            node: node,
-            displayName: _tailscaleNodeDisplayName(
-              node,
-              details.magicDnsSuffix,
-            ),
-          ),
+        if (peers.isEmpty) ListItem(title: Text(appLocalizations.noData)),
+        for (final node in peers) buildNode(node),
       ],
     ),
   ];
@@ -213,12 +220,25 @@ class _TailscaleNodeItemState extends State<_TailscaleNodeItem> {
     }
   }
 
+  String _osTitleCase(String os) {
+    return switch (os.toLowerCase()) {
+      'macOS' || 'iOS' || 'tvOS' || 'illumos' => os,
+      'freebsd' => 'FreeBSD',
+      'openbsd' => 'OpenBSD',
+      _ =>
+        os.codeUnits.isEmpty
+            ? os
+            : String.fromCharCode(os.codeUnits.first).toUpperCase() +
+                  String.fromCharCodes(os.codeUnits.skip(1)).toLowerCase(),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     final node = widget.node;
     final summary = [
-      if (node.os.isNotEmpty) node.os,
+      if (node.os.isNotEmpty) _osTitleCase(node.os),
       if (node.ips.isNotEmpty) node.ips.first,
     ];
     final color = node.online
@@ -228,10 +248,12 @@ class _TailscaleNodeItemState extends State<_TailscaleNodeItem> {
       leading: Icon(_nodeIcon(node.os), color: color),
       title: Text(widget.displayName),
       subtitle: summary.isEmpty ? null : Text(summary.join(' · ')),
-      trailing: !node.self && node.online
+      trailing: node.self
+          ? null
+          : node.online
           ? _buildDelayText(context)
           : Text(
-              node.self ? appLocalizations.local : appLocalizations.offline,
+              appLocalizations.offline,
               style: context.textTheme.bodyMedium?.copyWith(color: color),
             ),
       onTap: () {

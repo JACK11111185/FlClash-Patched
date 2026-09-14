@@ -484,6 +484,46 @@ class MessageLookup extends MessageLookupByLibrary {
       "Скорость скачивания",
     ),
     "downloadTraffic": MessageLookupByLibrary.simpleMessage("Входящий трафик"),
+    "easyTierConnectionLatency": MessageLookupByLibrary.simpleMessage(
+      "Задержка соединения",
+    ),
+    "easyTierDnsZone": MessageLookupByLibrary.simpleMessage("DNS-зона"),
+    "easyTierInstanceId": MessageLookupByLibrary.simpleMessage("ID экземпляра"),
+    "easyTierLatencyFirstPathLatency": MessageLookupByLibrary.simpleMessage(
+      "Задержка пути (приоритет задержки)",
+    ),
+    "easyTierListeners": MessageLookupByLibrary.simpleMessage(
+      "Адреса прослушивания",
+    ),
+    "easyTierLocalEndpoint": MessageLookupByLibrary.simpleMessage(
+      "Локальная конечная точка",
+    ),
+    "easyTierLossRate": MessageLookupByLibrary.simpleMessage("Потери пакетов"),
+    "easyTierMinDirectLatency": MessageLookupByLibrary.simpleMessage(
+      "Минимальная задержка прямого соединения",
+    ),
+    "easyTierNextHop": MessageLookupByLibrary.simpleMessage(
+      "ID следующего узла",
+    ),
+    "easyTierPathLatency": MessageLookupByLibrary.simpleMessage(
+      "Задержка пути (приоритет числа переходов)",
+    ),
+    "easyTierPeerId": MessageLookupByLibrary.simpleMessage("ID узла"),
+    "easyTierProtocol": MessageLookupByLibrary.simpleMessage(
+      "Транспортный протокол",
+    ),
+    "easyTierRemoteEndpoint": MessageLookupByLibrary.simpleMessage(
+      "Удалённая конечная точка",
+    ),
+    "easyTierRouteCost": MessageLookupByLibrary.simpleMessage(
+      "Стоимость маршрута",
+    ),
+    "easyTierRxPackets": MessageLookupByLibrary.simpleMessage(
+      "Получено пакетов",
+    ),
+    "easyTierTxPackets": MessageLookupByLibrary.simpleMessage(
+      "Отправлено пакетов",
+    ),
     "edit": MessageLookupByLibrary.simpleMessage("Редактировать"),
     "editGlobalRules": MessageLookupByLibrary.simpleMessage(
       "Редактировать глобальные правила",
@@ -728,9 +768,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Введите содержимое правила",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Эта система не выдаёт список установленных приложений без разрешения. Предоставьте его, чтобы настроить прокси для отдельных приложений.",
     ),

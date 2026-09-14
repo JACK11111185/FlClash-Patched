@@ -760,5 +760,21 @@
   "tailscaleNeedsMachineAuth": "Требуется одобрение устройства",
   "networking": "Оверлейные сети",
   "networkingDesc": "Просмотр состояния P2P-сетей",
-  "networkingNoOutbounds": "В текущей конфигурации нет исходящих P2P-подключений"
+  "networkingNoOutbounds": "В текущей конфигурации нет исходящих P2P-подключений",
+  "easyTierPeerId": "ID узла",
+  "easyTierInstanceId": "ID экземпляра",
+  "easyTierDnsZone": "DNS-зона",
+  "easyTierNextHop": "ID следующего узла",
+  "easyTierRouteCost": "Стоимость маршрута",
+  "easyTierProtocol": "Транспортный протокол",
+  "easyTierLocalEndpoint": "Локальная конечная точка",
+  "easyTierRemoteEndpoint": "Удалённая конечная точка",
+  "easyTierLossRate": "Потери пакетов",
+  "easyTierRxPackets": "Получено пакетов",
+  "easyTierTxPackets": "Отправлено пакетов",
+  "easyTierListeners": "Адреса прослушивания",
+  "easyTierMinDirectLatency": "Минимальная задержка прямого соединения",
+  "easyTierConnectionLatency": "Задержка соединения",
+  "easyTierPathLatency": "Задержка пути (приоритет числа переходов)",
+  "easyTierLatencyFirstPathLatency": "Задержка пути (приоритет задержки)"
 }

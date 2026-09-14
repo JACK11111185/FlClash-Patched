@@ -760,5 +760,21 @@
   "tailscaleNeedsMachineAuth": "Device approval required",
   "networking": "Networking",
   "networkingDesc": "View status of P2P networks",
-  "networkingNoOutbounds": "No P2P outbound in the current configuration"
+  "networkingNoOutbounds": "No P2P outbound in the current configuration",
+  "easyTierPeerId": "Peer ID",
+  "easyTierInstanceId": "Instance ID",
+  "easyTierDnsZone": "DNS zone",
+  "easyTierNextHop": "Next-hop peer ID",
+  "easyTierRouteCost": "Route cost",
+  "easyTierProtocol": "Transport protocol",
+  "easyTierLocalEndpoint": "Local endpoint",
+  "easyTierRemoteEndpoint": "Remote endpoint",
+  "easyTierLossRate": "Packet loss",
+  "easyTierRxPackets": "Received packets",
+  "easyTierTxPackets": "Sent packets",
+  "easyTierListeners": "Listeners",
+  "easyTierMinDirectLatency": "Minimum direct latency",
+  "easyTierConnectionLatency": "Connection latency",
+  "easyTierPathLatency": "Path latency (hop-count first)",
+  "easyTierLatencyFirstPathLatency": "Path latency (latency first)"
 }

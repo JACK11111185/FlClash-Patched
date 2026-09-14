@@ -433,7 +433,7 @@ func handleGetExternalProvider(externalProviderName string) *ExternalProvider {
 func handleGetOverlayNetworkStatus(params *GetOverlayNetworkStatusParams) []OverlayNetworkStatus {
 	proxies := make(map[string]*adapter.Proxy)
 	for _, proxy := range tunnel.AllProxies() {
-		if proxy == nil || proxy.Type() != constant.Tailscale && proxy.Type() != constant.ZeroTier {
+		if proxy == nil || proxy.Type() != constant.Tailscale && proxy.Type() != constant.ZeroTier && proxy.Type() != constant.EasyTier {
 			continue
 		}
 		if adapterProxy, ok := proxy.(*adapter.Proxy); ok {
@@ -541,6 +541,27 @@ func getOverlayNetworkStatus(target OverlayNetworkTarget, proxy *adapter.Proxy, 
 			tailscaleStatus,
 			outbound.TailscaleAuthKeyConfigured(proxy.Adapter()),
 		)
+	case overlayNetworkEasyTier:
+		if proxy.Type() != constant.EasyTier {
+			status.State = overlayNetworkError
+			status.Error = fmt.Sprintf("proxy %q is not an EasyTier outbound", target.Name)
+			return status
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		result, err := outbound.GetEasyTierStatus(ctx, proxy.Adapter(), includeDetails, activate)
+		status.NetworkName = result.Network
+		status.RawState = result.State
+		status.State = OverlayNetworkState(result.State)
+		status.Error = result.Error
+		if result.Details != nil {
+			status.Details = result.Details
+		}
+		if err != nil {
+			status.State = overlayNetworkError
+			status.Error = err.Error()
+		}
+		return status
 	case overlayNetworkZeroTier:
 		if proxy.Type() != constant.ZeroTier {
 			status.State = overlayNetworkError

@@ -245,6 +245,7 @@ type OverlayNetworkKind string
 const (
 	overlayNetworkTailscale OverlayNetworkKind = "tailscale"
 	overlayNetworkZeroTier  OverlayNetworkKind = "zerotier"
+	overlayNetworkEasyTier  OverlayNetworkKind = "easytier"
 )
 
 type OverlayNetworkDetailLevel string

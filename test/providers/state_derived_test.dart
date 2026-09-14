@@ -162,6 +162,19 @@ void main() {
         .update(
           (_) => const [
             Group(
+              name: 'EasyTier group',
+              type: GroupType.Selector,
+              all: [Proxy(name: 'mesh', type: 'EasyTier')],
+            ),
+          ],
+        );
+    expect(networkingItem().modes, [NavigationItemMode.more]);
+    expect(showsNetworkingTool(), isTrue);
+    container
+        .read(groupsProvider.notifier)
+        .update(
+          (_) => const [
+            Group(
               name: 'Direct group',
               type: GroupType.Selector,
               all: [Proxy(name: 'DIRECT', type: 'Direct')],

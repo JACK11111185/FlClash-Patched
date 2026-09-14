@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/metacubex/mihomo/adapter"
+	"github.com/metacubex/mihomo/adapter/outbound"
 	"testing"
 
 	"github.com/metacubex/tailscale/ipn/ipnstate"
@@ -165,5 +167,44 @@ func TestOverlayNetworkStateNormalization(t *testing.T) {
 	}
 	if got := zeroTierOverlayNetworkState("ok", "failure"); got != overlayNetworkError {
 		t.Fatalf("ZeroTier error mapped to %q", got)
+	}
+}
+
+func TestEasyTierOverlayProtocol(t *testing.T) {
+	var params GetOverlayNetworkStatusParams
+	if err := json.Unmarshal([]byte(`{"targets":[{"name":"mesh","kind":"easytier","level":"details"}]}`), &params); err != nil {
+		t.Fatal(err)
+	}
+	target := params.Targets[0]
+	if target.Kind != overlayNetworkEasyTier || target.Level != overlayNetworkDetails {
+		t.Fatalf("unexpected target: %+v", target)
+	}
+	missing := getOverlayNetworkStatus(target, nil, false)
+	if missing.State != overlayNetworkError || missing.Kind != overlayNetworkEasyTier {
+		t.Fatalf("unexpected missing status: %+v", missing)
+	}
+	wrong := getOverlayNetworkStatus(target, adapter.NewProxy(outbound.NewDirect()), false)
+	if wrong.State != overlayNetworkError || wrong.Error == "" {
+		t.Fatalf("type mismatch accepted: %+v", wrong)
+	}
+	status := OverlayNetworkStatus{
+		Name: "mesh", Kind: overlayNetworkEasyTier, State: overlayNetworkConnected,
+		Details: outbound.EasyTierNetworkDetails{
+			InstanceID: "instance-1", DNSZone: "mesh.internal",
+			Local: outbound.EasyTierNodeStatus{Hostname: "local", IPv4: "10.1.0.1"},
+			Peers: []outbound.EasyTierNodeStatus{},
+		},
+	}
+	payload, err := json.Marshal(status)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded map[string]any
+	if err := json.Unmarshal(payload, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	details := decoded["details"].(map[string]any)
+	if details["instance-id"] != "instance-1" || details["dns-zone"] != "mesh.internal" || len(details["peers"].([]any)) != 0 {
+		t.Fatalf("unexpected details: %s", payload)
 	}
 }
