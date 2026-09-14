@@ -45,6 +45,11 @@ func Start(fd int, config Options) *sing_tun.Listener {
 		}
 	}
 
+	tunStack, ok := constant.StackTypeMapping[strings.ToLower(config.Stack)]
+	if !ok {
+		tunStack = constant.TunMips
+	}
+
 	var dnsHijack []string
 	for _, address := range strings.Split(config.DNS, ",") {
 		address = strings.TrimSpace(address)
@@ -57,7 +62,7 @@ func Start(fd int, config Options) *sing_tun.Listener {
 	options := LC.Tun{
 		Enable:                 true,
 		Device:                 "FlClash",
-		Stack:                  constant.TunMips,
+		Stack:                  tunStack,
 		DNSHijack:              dnsHijack,
 		AutoRoute:              false,
 		AutoDetectInterface:    false,

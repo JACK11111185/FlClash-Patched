@@ -547,7 +547,7 @@ List<Widget> networkOptionsItems({
     const IcmpForwardingItem(),
     if (isDesktop) const TunDnsHijackItem(),
     const EndpointIndependentNatItem(),
-    if (!system.isIOS) const TunStackItem(),
+    const TunStackItem(),
     const TunMtuItem(),
     // mihomo's DefaultSocketHook ignores interface-name on Android
     // (core/lib.go installHooks, vendored dialer.go), so these rows only

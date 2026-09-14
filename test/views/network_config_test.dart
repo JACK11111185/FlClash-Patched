@@ -194,6 +194,11 @@ void main() {
   });
 
   group('network options items', () {
+    test('mobile network options include the stack picker', () {
+      final items = networkOptionsItems(isDesktop: false, isMacOS: false);
+      expect(items.whereType<TunStackItem>(), hasLength(1));
+    });
+
     test('interface name rows appear only on desktop', () {
       final desktopTypes = networkOptionsItems(
         isDesktop: true,

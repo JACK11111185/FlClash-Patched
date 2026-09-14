@@ -2966,7 +2966,7 @@ as bool?,
 /// @nodoc
 mixin _$Tun {
 
- bool get enable; String get device; int get mtu;@JsonKey(name: 'auto-route') bool get autoRoute;@JsonKey(unknownEnumValue: TunStack.mixed) TunStack get stack;@JsonKey(name: 'dns-hijack') List<String> get dnsHijack;@JsonKey(name: 'route-address') List<String> get routeAddress;@JsonKey(name: 'strict-route') bool get strictRoute;@JsonKey(name: 'disable-icmp-forwarding') bool get disableIcmpForwarding;@JsonKey(name: 'endpoint-independent-nat') bool get endpointIndependentNat;
+ bool get enable; String get device; int get mtu;@JsonKey(name: 'auto-route') bool get autoRoute;@JsonKey(unknownEnumValue: TunStack.mips) TunStack get stack;@JsonKey(name: 'dns-hijack') List<String> get dnsHijack;@JsonKey(name: 'route-address') List<String> get routeAddress;@JsonKey(name: 'strict-route') bool get strictRoute;@JsonKey(name: 'disable-icmp-forwarding') bool get disableIcmpForwarding;@JsonKey(name: 'endpoint-independent-nat') bool get endpointIndependentNat;
 /// Create a copy of Tun
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -3004,7 +3004,7 @@ abstract mixin class $TunCopyWith<$Res>  {
   factory $TunCopyWith(Tun value, $Res Function(Tun) _then) = _$TunCopyWithImpl;
 @useResult
 $Res call({
- bool enable, String device, int mtu,@JsonKey(name: 'auto-route') bool autoRoute,@JsonKey(unknownEnumValue: TunStack.mixed) TunStack stack,@JsonKey(name: 'dns-hijack') List<String> dnsHijack,@JsonKey(name: 'route-address') List<String> routeAddress,@JsonKey(name: 'strict-route') bool strictRoute,@JsonKey(name: 'disable-icmp-forwarding') bool disableIcmpForwarding,@JsonKey(name: 'endpoint-independent-nat') bool endpointIndependentNat
+ bool enable, String device, int mtu,@JsonKey(name: 'auto-route') bool autoRoute,@JsonKey(unknownEnumValue: TunStack.mips) TunStack stack,@JsonKey(name: 'dns-hijack') List<String> dnsHijack,@JsonKey(name: 'route-address') List<String> routeAddress,@JsonKey(name: 'strict-route') bool strictRoute,@JsonKey(name: 'disable-icmp-forwarding') bool disableIcmpForwarding,@JsonKey(name: 'endpoint-independent-nat') bool endpointIndependentNat
 });
 
 
@@ -3118,7 +3118,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool enable,  String device,  int mtu, @JsonKey(name: 'auto-route')  bool autoRoute, @JsonKey(unknownEnumValue: TunStack.mixed)  TunStack stack, @JsonKey(name: 'dns-hijack')  List<String> dnsHijack, @JsonKey(name: 'route-address')  List<String> routeAddress, @JsonKey(name: 'strict-route')  bool strictRoute, @JsonKey(name: 'disable-icmp-forwarding')  bool disableIcmpForwarding, @JsonKey(name: 'endpoint-independent-nat')  bool endpointIndependentNat)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool enable,  String device,  int mtu, @JsonKey(name: 'auto-route')  bool autoRoute, @JsonKey(unknownEnumValue: TunStack.mips)  TunStack stack, @JsonKey(name: 'dns-hijack')  List<String> dnsHijack, @JsonKey(name: 'route-address')  List<String> routeAddress, @JsonKey(name: 'strict-route')  bool strictRoute, @JsonKey(name: 'disable-icmp-forwarding')  bool disableIcmpForwarding, @JsonKey(name: 'endpoint-independent-nat')  bool endpointIndependentNat)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Tun() when $default != null:
 return $default(_that.enable,_that.device,_that.mtu,_that.autoRoute,_that.stack,_that.dnsHijack,_that.routeAddress,_that.strictRoute,_that.disableIcmpForwarding,_that.endpointIndependentNat);case _:
@@ -3139,7 +3139,7 @@ return $default(_that.enable,_that.device,_that.mtu,_that.autoRoute,_that.stack,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool enable,  String device,  int mtu, @JsonKey(name: 'auto-route')  bool autoRoute, @JsonKey(unknownEnumValue: TunStack.mixed)  TunStack stack, @JsonKey(name: 'dns-hijack')  List<String> dnsHijack, @JsonKey(name: 'route-address')  List<String> routeAddress, @JsonKey(name: 'strict-route')  bool strictRoute, @JsonKey(name: 'disable-icmp-forwarding')  bool disableIcmpForwarding, @JsonKey(name: 'endpoint-independent-nat')  bool endpointIndependentNat)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool enable,  String device,  int mtu, @JsonKey(name: 'auto-route')  bool autoRoute, @JsonKey(unknownEnumValue: TunStack.mips)  TunStack stack, @JsonKey(name: 'dns-hijack')  List<String> dnsHijack, @JsonKey(name: 'route-address')  List<String> routeAddress, @JsonKey(name: 'strict-route')  bool strictRoute, @JsonKey(name: 'disable-icmp-forwarding')  bool disableIcmpForwarding, @JsonKey(name: 'endpoint-independent-nat')  bool endpointIndependentNat)  $default,) {final _that = this;
 switch (_that) {
 case _Tun():
 return $default(_that.enable,_that.device,_that.mtu,_that.autoRoute,_that.stack,_that.dnsHijack,_that.routeAddress,_that.strictRoute,_that.disableIcmpForwarding,_that.endpointIndependentNat);case _:
@@ -3159,7 +3159,7 @@ return $default(_that.enable,_that.device,_that.mtu,_that.autoRoute,_that.stack,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool enable,  String device,  int mtu, @JsonKey(name: 'auto-route')  bool autoRoute, @JsonKey(unknownEnumValue: TunStack.mixed)  TunStack stack, @JsonKey(name: 'dns-hijack')  List<String> dnsHijack, @JsonKey(name: 'route-address')  List<String> routeAddress, @JsonKey(name: 'strict-route')  bool strictRoute, @JsonKey(name: 'disable-icmp-forwarding')  bool disableIcmpForwarding, @JsonKey(name: 'endpoint-independent-nat')  bool endpointIndependentNat)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool enable,  String device,  int mtu, @JsonKey(name: 'auto-route')  bool autoRoute, @JsonKey(unknownEnumValue: TunStack.mips)  TunStack stack, @JsonKey(name: 'dns-hijack')  List<String> dnsHijack, @JsonKey(name: 'route-address')  List<String> routeAddress, @JsonKey(name: 'strict-route')  bool strictRoute, @JsonKey(name: 'disable-icmp-forwarding')  bool disableIcmpForwarding, @JsonKey(name: 'endpoint-independent-nat')  bool endpointIndependentNat)?  $default,) {final _that = this;
 switch (_that) {
 case _Tun() when $default != null:
 return $default(_that.enable,_that.device,_that.mtu,_that.autoRoute,_that.stack,_that.dnsHijack,_that.routeAddress,_that.strictRoute,_that.disableIcmpForwarding,_that.endpointIndependentNat);case _:
@@ -3174,14 +3174,14 @@ return $default(_that.enable,_that.device,_that.mtu,_that.autoRoute,_that.stack,
 @JsonSerializable()
 
 class _Tun implements Tun {
-  const _Tun({this.enable = false, this.device = appName, this.mtu = defaultTunMtu, @JsonKey(name: 'auto-route') this.autoRoute = false, @JsonKey(unknownEnumValue: TunStack.mixed) this.stack = TunStack.mixed, @JsonKey(name: 'dns-hijack')  List<String> dnsHijack = const [], @JsonKey(name: 'route-address')  List<String> routeAddress = const [], @JsonKey(name: 'strict-route') this.strictRoute = false, @JsonKey(name: 'disable-icmp-forwarding') this.disableIcmpForwarding = false, @JsonKey(name: 'endpoint-independent-nat') this.endpointIndependentNat = false}): _dnsHijack = dnsHijack,_routeAddress = routeAddress;
+  const _Tun({this.enable = false, this.device = appName, this.mtu = defaultTunMtu, @JsonKey(name: 'auto-route') this.autoRoute = false, @JsonKey(unknownEnumValue: TunStack.mips) this.stack = TunStack.mips, @JsonKey(name: 'dns-hijack')  List<String> dnsHijack = const [], @JsonKey(name: 'route-address')  List<String> routeAddress = const [], @JsonKey(name: 'strict-route') this.strictRoute = false, @JsonKey(name: 'disable-icmp-forwarding') this.disableIcmpForwarding = false, @JsonKey(name: 'endpoint-independent-nat') this.endpointIndependentNat = false}): _dnsHijack = dnsHijack,_routeAddress = routeAddress;
   factory _Tun.fromJson(Map<String, dynamic> json) => _$TunFromJson(json);
 
 @override@JsonKey() final  bool enable;
 @override@JsonKey() final  String device;
 @override@JsonKey() final  int mtu;
 @override@JsonKey(name: 'auto-route') final  bool autoRoute;
-@override@JsonKey(unknownEnumValue: TunStack.mixed) final  TunStack stack;
+@override@JsonKey(unknownEnumValue: TunStack.mips) final  TunStack stack;
  final  List<String> _dnsHijack;
 @override@JsonKey(name: 'dns-hijack') List<String> get dnsHijack {
   if (_dnsHijack is EqualUnmodifiableListView) return _dnsHijack;
@@ -3235,7 +3235,7 @@ abstract mixin class _$TunCopyWith<$Res> implements $TunCopyWith<$Res> {
   factory _$TunCopyWith(_Tun value, $Res Function(_Tun) _then) = __$TunCopyWithImpl;
 @override @useResult
 $Res call({
- bool enable, String device, int mtu,@JsonKey(name: 'auto-route') bool autoRoute,@JsonKey(unknownEnumValue: TunStack.mixed) TunStack stack,@JsonKey(name: 'dns-hijack') List<String> dnsHijack,@JsonKey(name: 'route-address') List<String> routeAddress,@JsonKey(name: 'strict-route') bool strictRoute,@JsonKey(name: 'disable-icmp-forwarding') bool disableIcmpForwarding,@JsonKey(name: 'endpoint-independent-nat') bool endpointIndependentNat
+ bool enable, String device, int mtu,@JsonKey(name: 'auto-route') bool autoRoute,@JsonKey(unknownEnumValue: TunStack.mips) TunStack stack,@JsonKey(name: 'dns-hijack') List<String> dnsHijack,@JsonKey(name: 'route-address') List<String> routeAddress,@JsonKey(name: 'strict-route') bool strictRoute,@JsonKey(name: 'disable-icmp-forwarding') bool disableIcmpForwarding,@JsonKey(name: 'endpoint-independent-nat') bool endpointIndependentNat
 });
 
 

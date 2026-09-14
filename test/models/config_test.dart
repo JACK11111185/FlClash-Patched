@@ -17,6 +17,16 @@ T roundTrip<T>(
 }
 
 void main() {
+  test('TUN defaults to mips and preserves saved stack choices', () {
+    expect(const Tun().stack, TunStack.mips);
+    expect(Tun.fromJson({}).stack, TunStack.mips);
+    for (final stack in TunStack.values) {
+      final tun = Tun.fromJson({'stack': stack.name});
+      expect(tun.stack, stack);
+      expect(roundTrip(tun.toJson, Tun.fromJson).stack, stack);
+    }
+  });
+
   group('GeoResource JSON', () {
     test('exposes mihomo raw config keys', () {
       expect(GeoResource.MMDB.configKey, 'mmdb');
@@ -527,7 +537,7 @@ void main() {
       expect(patch.interfaceNameMode, InterfaceNameMode.clear);
       expect(patch.geodataLoader, GeodataLoader.memconservative);
       expect(patch.geositeMatcher, GeositeMatcher.succinct);
-      expect(patch.tun.stack, TunStack.mixed);
+      expect(patch.tun.stack, TunStack.mips);
       expect(patch.dns.enhancedMode, DnsMode.fakeIp);
     });
 

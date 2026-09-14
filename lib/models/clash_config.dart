@@ -252,8 +252,8 @@ abstract class Tun with _$Tun {
     @Default(appName) String device,
     @Default(defaultTunMtu) int mtu,
     @JsonKey(name: 'auto-route') @Default(false) bool autoRoute,
-    @Default(TunStack.mixed)
-    @JsonKey(unknownEnumValue: TunStack.mixed)
+    @Default(TunStack.mips)
+    @JsonKey(unknownEnumValue: TunStack.mips)
     TunStack stack,
     @JsonKey(name: 'dns-hijack') @Default([]) List<String> dnsHijack,
     @JsonKey(name: 'route-address') @Default([]) List<String> routeAddress,

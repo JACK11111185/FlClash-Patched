@@ -173,9 +173,9 @@ _Tun _$TunFromJson(Map<String, dynamic> json) => _Tun(
       $enumDecodeNullable(
         _$TunStackEnumMap,
         json['stack'],
-        unknownValue: TunStack.mixed,
+        unknownValue: TunStack.mips,
       ) ??
-      TunStack.mixed,
+      TunStack.mips,
   dnsHijack:
       (json['dns-hijack'] as List<dynamic>?)
           ?.map((e) => e as String)
