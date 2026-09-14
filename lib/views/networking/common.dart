@@ -88,7 +88,7 @@ class OverlayNetworkDetailsDialog extends StatelessWidget {
     );
   }
 
-  double _getMaxNameWidth(TextStyle? nameStyle, BoxConstraints constraints) {
+  double _getMaxNameWidth(TextStyle? nameStyle) {
     double maxWidth = 0;
     for (final item in items) {
       final width = globalState.measure
@@ -98,15 +98,29 @@ class OverlayNetworkDetailsDialog extends StatelessWidget {
         maxWidth = width;
       }
     }
-    return min(maxWidth + 18, constraints.maxWidth * 0.4);
+    return maxWidth + 18;
   }
 
   @override
   Widget build(BuildContext context) {
     final nameStyle = context.textTheme.bodyMedium;
+    final preferredNameWidth = _getMaxNameWidth(nameStyle);
+    var contentWidth = max(300.0, preferredNameWidth / 0.4);
+    for (final item in items) {
+      final valueWidth = globalState.measure
+          .computeTextSize(
+            Text(item.value, style: context.textTheme.bodyMedium?.toLight),
+          )
+          .width;
+      final trailingWidth = item.copyable ? 64.0 : 0.0;
+      contentWidth = max(
+        contentWidth,
+        preferredNameWidth + 8 + valueWidth + trailingWidth,
+      );
+    }
     return CommonDialog(
       title: title,
-      maxWidth: 400,
+      maxWidth: contentWidth,
       actions: [
         TextButton(
           onPressed: () {
@@ -119,7 +133,10 @@ class OverlayNetworkDetailsDialog extends StatelessWidget {
         type: MaterialType.transparency,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final nameWidth = _getMaxNameWidth(nameStyle, constraints);
+            final nameWidth = min(
+              preferredNameWidth,
+              constraints.maxWidth * 0.4,
+            );
             return Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
