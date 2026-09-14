@@ -43,8 +43,8 @@ class CommonTargetIcon extends StatelessWidget {
 
     final base64 = _decodeIcon(src);
     if (base64 != null) {
-      return Image.memory(
-        base64,
+      return _SizedRasterImage(
+        image: MemoryImage(base64),
         gaplessPlayback: true,
         errorBuilder: (_, error, _) {
           return _defaultIcon();
@@ -238,6 +238,44 @@ class CommonImage extends StatelessWidget {
   Widget build(BuildContext context) {
     return isSvg
         ? SvgPicture.file(data, errorBuilder: errorBuilder)
-        : Image.file(data, errorBuilder: errorBuilder);
+        : _SizedRasterImage(image: FileImage(data), errorBuilder: errorBuilder);
+  }
+}
+
+class _SizedRasterImage extends StatelessWidget {
+  final ImageProvider image;
+  final bool gaplessPlayback;
+  final ImageErrorWidgetBuilder? errorBuilder;
+
+  const _SizedRasterImage({
+    required this.image,
+    this.gaplessPlayback = false,
+    this.errorBuilder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pixelRatio = MediaQuery.devicePixelRatioOf(context);
+    final fallbackSize = IconTheme.of(context).size ?? 24;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.hasBoundedWidth
+            ? constraints.maxWidth
+            : fallbackSize;
+        final height = constraints.hasBoundedHeight
+            ? constraints.maxHeight
+            : fallbackSize;
+        return Image(
+          image: ResizeImage(
+            image,
+            width: (width * pixelRatio).ceil().clamp(1, 0x7fffffff),
+            height: (height * pixelRatio).ceil().clamp(1, 0x7fffffff),
+            policy: ResizeImagePolicy.fit,
+          ),
+          gaplessPlayback: gaplessPlayback,
+          errorBuilder: errorBuilder,
+        );
+      },
+    );
   }
 }
