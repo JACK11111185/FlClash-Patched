@@ -205,6 +205,7 @@ Map<String, dynamic> _$TunToJson(_Tun instance) => <String, dynamic>{
 };
 
 const _$TunStackEnumMap = {
+  TunStack.mips: 'mips',
   TunStack.gvisor: 'gvisor',
   TunStack.system: 'system',
   TunStack.mixed: 'mixed',

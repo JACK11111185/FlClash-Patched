@@ -57,7 +57,7 @@ func Start(fd int, config Options) *sing_tun.Listener {
 	options := LC.Tun{
 		Enable:                 true,
 		Device:                 "FlClash",
-		Stack:                  constant.TunGvisor,
+		Stack:                  constant.TunMips,
 		DNSHijack:              dnsHijack,
 		AutoRoute:              false,
 		AutoDetectInterface:    false,

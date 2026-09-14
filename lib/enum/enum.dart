@@ -187,7 +187,7 @@ enum TrackerInfoSortType {
   proxyChains,
 }
 
-enum TunStack { gvisor, system, mixed }
+enum TunStack { mips, gvisor, system, mixed }
 
 enum AccessControlMode { acceptSelected, rejectSelected }
 
