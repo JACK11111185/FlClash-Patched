@@ -17,6 +17,16 @@ T roundTrip<T>(
 }
 
 void main() {
+  test('TUN batch packet options preserve defaults and explicit overrides', () {
+    final defaults = Tun.fromJson({});
+    expect(defaults.recvMsgX, isTrue);
+    expect(defaults.sendMsgX, isFalse);
+    final tun = Tun.fromJson({'recvmsgx': false, 'sendmsgx': true});
+    final json = roundTrip(tun.toJson, Tun.fromJson).toJson();
+    expect(json['recvmsgx'], isFalse);
+    expect(json['sendmsgx'], isTrue);
+  });
+
   test('TUN defaults to mips and preserves saved stack choices', () {
     expect(const Tun().stack, TunStack.mips);
     expect(Tun.fromJson({}).stack, TunStack.mips);

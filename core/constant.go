@@ -55,6 +55,8 @@ type UpdateParams struct {
 }
 
 type tunSchema struct {
+	RecvMsgX     *bool              `yaml:"recvmsgx" json:"recvmsgx"`
+	SendMsgX     *bool              `yaml:"sendmsgx" json:"sendmsgx"`
 	Enable       bool               `yaml:"enable" json:"enable"`
 	Device       *string            `yaml:"device" json:"device"`
 	Stack        *constant.TUNStack `yaml:"stack" json:"stack"`

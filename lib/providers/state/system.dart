@@ -234,6 +234,12 @@ SharedState sharedState(Ref ref) {
           (state) => state.tun.endpointIndependentNat,
         ),
       ),
+      recvMsgX: ref.watch(
+        patchClashConfigProvider.select((state) => state.tun.recvMsgX),
+      ),
+      sendMsgX: ref.watch(
+        patchClashConfigProvider.select((state) => state.tun.sendMsgX),
+      ),
       includeAllNetworks: vpnSetting.includeAllNetworks,
       excludeLocalNetworks: vpnSetting.excludeLocalNetworks,
       excludeAPNs: vpnSetting.excludeAPNs,

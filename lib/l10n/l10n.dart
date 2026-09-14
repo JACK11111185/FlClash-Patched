@@ -6509,6 +6509,46 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Enable recvmsg_x`
+  String get recvMsgX {
+    return Intl.message(
+      'Enable recvmsg_x',
+      name: 'recvMsgX',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Receive TUN packets in batches on macOS and iOS; may crash on iOS if memory usage exceeds the limit`
+  String get recvMsgXDesc {
+    return Intl.message(
+      'Receive TUN packets in batches on macOS and iOS; may crash on iOS if memory usage exceeds the limit',
+      name: 'recvMsgXDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enable sendmsg_x`
+  String get sendMsgX {
+    return Intl.message(
+      'Enable sendmsg_x',
+      name: 'sendMsgX',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Send TUN packets in batches on macOS and iOS; may cause the kernel to freeze during multi-threaded downloads`
+  String get sendMsgXDesc {
+    return Intl.message(
+      'Send TUN packets in batches on macOS and iOS; may cause the kernel to freeze during multi-threaded downloads',
+      name: 'sendMsgXDesc',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

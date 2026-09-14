@@ -248,6 +248,12 @@ func routeConfig(cfg *config.Config) *route.Config {
 
 func patchTun(target *LC.Tun, params *tunSchema) {
 	target.Enable = params.Enable
+	if params.RecvMsgX != nil {
+		target.RecvMsgX = *params.RecvMsgX
+	}
+	if params.SendMsgX != nil {
+		target.SendMsgX = *params.SendMsgX
+	}
 	if params.AutoRoute != nil {
 		target.AutoRoute = *params.AutoRoute
 	}

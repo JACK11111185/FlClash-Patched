@@ -292,6 +292,34 @@ class EndpointIndependentNatItem extends ConsumerWidget {
   );
 }
 
+class RecvMsgXItem extends ConsumerWidget {
+  const RecvMsgXItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => ConfigToggleItem(
+    title: (l) => l.recvMsgX,
+    subtitle: (l) => l.recvMsgXDesc,
+    selector: patchClashConfigProvider.select((state) => state.tun.recvMsgX),
+    onChanged: _tunWriter(
+      (state, value) => state.copyWith.tun(recvMsgX: value),
+    ),
+  );
+}
+
+class SendMsgXItem extends ConsumerWidget {
+  const SendMsgXItem({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => ConfigToggleItem(
+    title: (l) => l.sendMsgX,
+    subtitle: (l) => l.sendMsgXDesc,
+    selector: patchClashConfigProvider.select((state) => state.tun.sendMsgX),
+    onChanged: _tunWriter(
+      (state, value) => state.copyWith.tun(sendMsgX: value),
+    ),
+  );
+}
+
 class TunStackItem extends ConsumerWidget {
   const TunStackItem({super.key});
 
@@ -539,6 +567,7 @@ class RouteAddressItem extends ConsumerWidget {
 List<Widget> networkOptionsItems({
   required bool isDesktop,
   required bool isMacOS,
+  bool isIOS = false,
 }) {
   return [
     if (isDesktop) const TUNItem(),
@@ -548,6 +577,7 @@ List<Widget> networkOptionsItems({
     if (isDesktop) const TunDnsHijackItem(),
     const EndpointIndependentNatItem(),
     const TunStackItem(),
+    if (isMacOS || isIOS) ...[const RecvMsgXItem(), const SendMsgXItem()],
     const TunMtuItem(),
     // mihomo's DefaultSocketHook ignores interface-name on Android
     // (core/lib.go installHooks, vendored dialer.go), so these rows only
@@ -591,6 +621,7 @@ class NetworkListView extends ConsumerWidget {
         items: networkOptionsItems(
           isDesktop: system.isDesktop,
           isMacOS: system.isMacOS,
+          isIOS: system.isIOS,
         ),
       ),
       if (system.isIOS)

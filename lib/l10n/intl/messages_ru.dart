@@ -768,10 +768,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Введите содержимое правила",
     ),
-    "installedAppsPermissionDeniedMessage":
-        MessageLookupByLibrary.simpleMessage(
-          "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
-        ),
+    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
+      "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
+    ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Эта система не выдаёт список установленных приложений без разрешения. Предоставьте его, чтобы настроить прокси для отдельных приложений.",
     ),
@@ -1132,6 +1131,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "quickFill": MessageLookupByLibrary.simpleMessage("Быстрое заполнение"),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("Радуга"),
     "random": MessageLookupByLibrary.simpleMessage("Случайный"),
+    "recvMsgX": MessageLookupByLibrary.simpleMessage("Включить recvmsg_x"),
+    "recvMsgXDesc": MessageLookupByLibrary.simpleMessage(
+      "Пакетный приём пакетов TUN в macOS и iOS; в iOS возможен сбой при превышении лимита памяти",
+    ),
     "redirPort": MessageLookupByLibrary.simpleMessage("Порт Redir"),
     "redo": MessageLookupByLibrary.simpleMessage("Повторить"),
     "regexSearch": MessageLookupByLibrary.simpleMessage("Поиск по regex"),
@@ -1368,6 +1371,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "selected": MessageLookupByLibrary.simpleMessage("Выбрано"),
     "selectedCountTitle": m29,
+    "sendMsgX": MessageLookupByLibrary.simpleMessage("Включить sendmsg_x"),
+    "sendMsgXDesc": MessageLookupByLibrary.simpleMessage(
+      "Пакетная отправка пакетов TUN в macOS и iOS; возможны зависания ядра при многопоточной загрузке",
+    ),
     "settings": MessageLookupByLibrary.simpleMessage("Настройки"),
     "show": MessageLookupByLibrary.simpleMessage("Показать"),
     "showHiddenGroups": MessageLookupByLibrary.simpleMessage(

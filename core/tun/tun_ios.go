@@ -63,6 +63,8 @@ func Start(fd int, config Options) *sing_tun.Listener {
 		Enable:                 true,
 		Device:                 "FlClash",
 		Stack:                  tunStack,
+		RecvMsgX:               config.RecvMsgX,
+		SendMsgX:               config.SendMsgX,
 		DNSHijack:              dnsHijack,
 		AutoRoute:              false,
 		AutoDetectInterface:    false,

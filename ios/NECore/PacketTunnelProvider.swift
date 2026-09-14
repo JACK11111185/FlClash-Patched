@@ -86,7 +86,9 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
           dns: self.networkConfiguration.tunDNS(for: vpnOptions),
           mtu: vpnOptions.mtu,
           disableIcmpForwarding: vpnOptions.disableIcmpForwarding,
-          endpointIndependentNat: vpnOptions.endpointIndependentNat
+          endpointIndependentNat: vpnOptions.endpointIndependentNat,
+          recvMsgX: vpnOptions.recvMsgX,
+          sendMsgX: vpnOptions.sendMsgX
         )
         guard let coreTunOptionsData = try? JSONEncoder().encode(coreTunOptions)
         else {
@@ -246,6 +248,8 @@ private struct CoreTunOptions: Encodable {
   let mtu: Int
   let disableIcmpForwarding: Bool
   let endpointIndependentNat: Bool
+  let recvMsgX: Bool
+  let sendMsgX: Bool
 }
 
 private enum PacketTunnelProviderError: LocalizedError {

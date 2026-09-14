@@ -22,6 +22,17 @@ class _ToggleCase {
 
 final _toggleCases = <_ToggleCase>[
   _ToggleCase(
+    'RecvMsgX',
+    const RecvMsgXItem(),
+    (c) => c.read(patchClashConfigProvider).tun.recvMsgX,
+    initial: true,
+  ),
+  _ToggleCase(
+    'SendMsgX',
+    const SendMsgXItem(),
+    (c) => c.read(patchClashConfigProvider).tun.sendMsgX,
+  ),
+  _ToggleCase(
     'VPN',
     const VPNItem(),
     (c) => c.read(vpnSettingProvider).enable,
@@ -194,6 +205,19 @@ void main() {
   });
 
   group('network options items', () {
+    test('batch packet switches appear only on Apple platforms', () {
+      for (final platform in ['ios', 'macos', 'android', 'linux']) {
+        final items = networkOptionsItems(
+          isDesktop: platform == 'macos' || platform == 'linux',
+          isMacOS: platform == 'macos',
+          isIOS: platform == 'ios',
+        );
+        final count = platform == 'ios' || platform == 'macos' ? 1 : 0;
+        expect(items.whereType<RecvMsgXItem>(), hasLength(count));
+        expect(items.whereType<SendMsgXItem>(), hasLength(count));
+      }
+    });
+
     test('mobile network options include the stack picker', () {
       final items = networkOptionsItems(isDesktop: false, isMacOS: false);
       expect(items.whereType<TunStackItem>(), hasLength(1));

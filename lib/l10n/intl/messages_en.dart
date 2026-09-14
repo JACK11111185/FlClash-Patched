@@ -735,10 +735,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Enter the rule content",
     ),
-    "installedAppsPermissionDeniedMessage":
-        MessageLookupByLibrary.simpleMessage(
-          "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
-        ),
+    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
+      "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
+    ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "This system hides the installed app list until the permission is granted. Authorize it to configure the per-app proxy.",
     ),
@@ -1081,6 +1080,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "quickFill": MessageLookupByLibrary.simpleMessage("Quick fill"),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("Rainbow"),
     "random": MessageLookupByLibrary.simpleMessage("Random"),
+    "recvMsgX": MessageLookupByLibrary.simpleMessage("Enable recvmsg_x"),
+    "recvMsgXDesc": MessageLookupByLibrary.simpleMessage(
+      "Receive TUN packets in batches on macOS and iOS; may crash on iOS if memory usage exceeds the limit",
+    ),
     "redirPort": MessageLookupByLibrary.simpleMessage("Redir port"),
     "redo": MessageLookupByLibrary.simpleMessage("Redo"),
     "regexSearch": MessageLookupByLibrary.simpleMessage("Regex search"),
@@ -1305,6 +1308,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "selected": MessageLookupByLibrary.simpleMessage("Selected"),
     "selectedCountTitle": m29,
+    "sendMsgX": MessageLookupByLibrary.simpleMessage("Enable sendmsg_x"),
+    "sendMsgXDesc": MessageLookupByLibrary.simpleMessage(
+      "Send TUN packets in batches on macOS and iOS; may cause the kernel to freeze during multi-threaded downloads",
+    ),
     "settings": MessageLookupByLibrary.simpleMessage("Settings"),
     "show": MessageLookupByLibrary.simpleMessage("Show"),
     "showHiddenGroups": MessageLookupByLibrary.simpleMessage("Show hidden"),

@@ -57,6 +57,8 @@ abstract class VpnOptions with _$VpnOptions {
     @Default([]) List<String> routeAddress,
     @Default(false) bool disableIcmpForwarding,
     @Default(false) bool endpointIndependentNat,
+    @Default(true) bool recvMsgX,
+    @Default(false) bool sendMsgX,
     @Default(false) bool includeAllNetworks,
     @Default(true) bool excludeLocalNetworks,
     @Default(true) bool excludeAPNs,

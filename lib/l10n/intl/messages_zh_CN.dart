@@ -788,6 +788,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "quickFill": MessageLookupByLibrary.simpleMessage("一键填入"),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("彩虹"),
     "random": MessageLookupByLibrary.simpleMessage("随机"),
+    "recvMsgX": MessageLookupByLibrary.simpleMessage("启用 recvmsg_x"),
+    "recvMsgXDesc": MessageLookupByLibrary.simpleMessage(
+      "在 macOS 和 iOS 上批量接收 TUN 数据包；iOS 下可能因内存占用超限崩溃",
+    ),
     "redirPort": MessageLookupByLibrary.simpleMessage("Redir 端口"),
     "redo": MessageLookupByLibrary.simpleMessage("重做"),
     "regexSearch": MessageLookupByLibrary.simpleMessage("正则搜索"),
@@ -948,6 +952,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectSubRule": MessageLookupByLibrary.simpleMessage("请选择子规则"),
     "selected": MessageLookupByLibrary.simpleMessage("已选择"),
     "selectedCountTitle": m29,
+    "sendMsgX": MessageLookupByLibrary.simpleMessage("启用 sendmsg_x"),
+    "sendMsgXDesc": MessageLookupByLibrary.simpleMessage(
+      "在 macOS 和 iOS 上批量发送 TUN 数据包；多线程下载时可能导致内核卡住",
+    ),
     "settings": MessageLookupByLibrary.simpleMessage("设置"),
     "show": MessageLookupByLibrary.simpleMessage("显示"),
     "showHiddenGroups": MessageLookupByLibrary.simpleMessage("显示隐藏组"),

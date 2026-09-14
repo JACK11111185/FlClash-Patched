@@ -776,5 +776,9 @@
   "easyTierMinDirectLatency": "最小直接接続遅延",
   "easyTierConnectionLatency": "接続遅延",
   "easyTierPathLatency": "経路遅延（ホップ数優先）",
-  "easyTierLatencyFirstPathLatency": "経路遅延（遅延優先）"
+  "easyTierLatencyFirstPathLatency": "経路遅延（遅延優先）",
+  "recvMsgX": "recvmsg_x を有効にする",
+  "recvMsgXDesc": "macOS と iOS で TUN パケットを一括受信。iOS ではメモリ使用量が上限を超えるとクラッシュする可能性があります",
+  "sendMsgX": "sendmsg_x を有効にする",
+  "sendMsgXDesc": "macOS と iOS で TUN パケットを一括送信。マルチスレッドダウンロード中にカーネルがフリーズする可能性があります"
 }

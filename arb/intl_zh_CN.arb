@@ -776,5 +776,9 @@
   "easyTierMinDirectLatency": "最低直连延迟",
   "easyTierConnectionLatency": "连接延迟",
   "easyTierPathLatency": "路径延迟（跳数优先）",
-  "easyTierLatencyFirstPathLatency": "路径延迟（延迟优先）"
+  "easyTierLatencyFirstPathLatency": "路径延迟（延迟优先）",
+  "recvMsgX": "启用 recvmsg_x",
+  "recvMsgXDesc": "在 macOS 和 iOS 上批量接收 TUN 数据包；iOS 下可能因内存占用超限崩溃",
+  "sendMsgX": "启用 sendmsg_x",
+  "sendMsgXDesc": "在 macOS 和 iOS 上批量发送 TUN 数据包；多线程下载时可能导致内核卡住"
 }

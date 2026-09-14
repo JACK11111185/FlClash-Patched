@@ -1,6 +1,8 @@
 package tun
 
 type Options struct {
+	RecvMsgX               bool   `json:"recvMsgX"`
+	SendMsgX               bool   `json:"sendMsgX"`
 	Stack                  string `json:"stack"`
 	Address                string `json:"address"`
 	DNS                    string `json:"dns"`

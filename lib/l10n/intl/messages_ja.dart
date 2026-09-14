@@ -904,6 +904,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "quickFill": MessageLookupByLibrary.simpleMessage("クイック入力"),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("レインボー"),
     "random": MessageLookupByLibrary.simpleMessage("ランダム"),
+    "recvMsgX": MessageLookupByLibrary.simpleMessage("recvmsg_x を有効にする"),
+    "recvMsgXDesc": MessageLookupByLibrary.simpleMessage(
+      "macOS と iOS で TUN パケットを一括受信。iOS ではメモリ使用量が上限を超えるとクラッシュする可能性があります",
+    ),
     "redirPort": MessageLookupByLibrary.simpleMessage("Redir ポート"),
     "redo": MessageLookupByLibrary.simpleMessage("やり直す"),
     "regexSearch": MessageLookupByLibrary.simpleMessage("正規表現検索"),
@@ -1094,6 +1098,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectSubRule": MessageLookupByLibrary.simpleMessage("サブルールを選択してください"),
     "selected": MessageLookupByLibrary.simpleMessage("選択済み"),
     "selectedCountTitle": m29,
+    "sendMsgX": MessageLookupByLibrary.simpleMessage("sendmsg_x を有効にする"),
+    "sendMsgXDesc": MessageLookupByLibrary.simpleMessage(
+      "macOS と iOS で TUN パケットを一括送信。マルチスレッドダウンロード中にカーネルがフリーズする可能性があります",
+    ),
     "settings": MessageLookupByLibrary.simpleMessage("設定"),
     "show": MessageLookupByLibrary.simpleMessage("表示"),
     "showHiddenGroups": MessageLookupByLibrary.simpleMessage("非表示グループを表示"),
