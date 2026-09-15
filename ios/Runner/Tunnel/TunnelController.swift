@@ -67,7 +67,7 @@ final class TunnelController {
         queue: .main
       ) { [weak self] _ in
         Task { @MainActor in
-          self?.coordinator.requestStatusRefresh(notifyExternal: true)
+          self?.coordinator.requestStatusRefresh(notifyExternal: false)
         }
       }
     }
