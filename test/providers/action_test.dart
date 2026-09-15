@@ -78,35 +78,31 @@ void main() {
       expect(container.read(profilesProvider), [second, updatedFirst]);
     });
 
-    test(
-      'skips profile updates that are disabled, fresh, or file-based',
-      () async {
-        final profiles = [
-          Profile.normal(label: 'Disabled').copyWith(autoUpdate: false),
-          Profile.normal(label: 'Fresh').copyWith(
-            autoUpdate: true,
-            lastUpdateDate: DateTime.now().add(const Duration(days: 1)),
-          ),
-          Profile.normal(label: 'File').copyWith(
-            autoUpdate: true,
-            lastUpdateDate: DateTime.now().subtract(const Duration(days: 1)),
-          ),
-        ];
-        final container = ProviderContainer(
-          overrides: [
-            currentProfileIdProvider.overrideWithBuild((_, _) => null),
-            profilesProvider.overrideWith(() => TestProfiles(profiles)),
-          ],
-        );
-        addTearDown(container.dispose);
-        final action = container.read(profilesActionProvider.notifier);
+    test('bulk profile updates skip local files', () async {
+      final profiles = [
+        Profile.normal(label: 'Disabled').copyWith(autoUpdate: false),
+        Profile.normal(label: 'Fresh').copyWith(
+          autoUpdate: true,
+          lastUpdateDate: DateTime.now().add(const Duration(days: 1)),
+        ),
+        Profile.normal(label: 'File').copyWith(
+          autoUpdate: true,
+          lastUpdateDate: DateTime.now().subtract(const Duration(days: 1)),
+        ),
+      ];
+      final container = ProviderContainer(
+        overrides: [
+          currentProfileIdProvider.overrideWithBuild((_, _) => null),
+          profilesProvider.overrideWith(() => TestProfiles(profiles)),
+        ],
+      );
+      addTearDown(container.dispose);
+      final action = container.read(profilesActionProvider.notifier);
 
-        await action.autoUpdateProfiles();
-        await action.updateProfiles();
+      await action.updateProfiles();
 
-        expect(container.read(profilesProvider), profiles);
-      },
-    );
+      expect(container.read(profilesProvider), profiles);
+    });
 
     test('setProfileAndAutoApply stores a non-current profile', () {
       final current = Profile.normal(label: 'Current');

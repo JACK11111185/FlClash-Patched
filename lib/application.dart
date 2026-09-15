@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/window.dart';
+import 'package:fl_clash/common/profile_auto_updater.dart';
 import 'package:fl_clash/bootstrap.dart';
 import 'package:fl_clash/common/system_dns.dart';
 import 'package:fl_clash/l10n/l10n.dart';
@@ -82,7 +83,7 @@ class Application extends ConsumerStatefulWidget {
 }
 
 class ApplicationState extends ConsumerState<Application> {
-  Timer? _autoUpdateProfilesTaskTimer;
+  late final ProfileAutoUpdater _profileAutoUpdater;
   bool _preHasVpn = false;
 
   ColorScheme _getAppColorScheme({required Brightness brightness}) {
@@ -92,6 +93,16 @@ class ApplicationState extends ConsumerState<Application> {
   @override
   void initState() {
     super.initState();
+    _profileAutoUpdater = ProfileAutoUpdater(
+      profiles: () => ref.read(profilesProvider),
+      update: (profile) =>
+          ref.read(profilesActionProvider.notifier).updateProfile(profile),
+      onError: (error) => commonPrint.log(compactError(error)),
+    );
+    ref.listenManual(
+      profilesProvider,
+      (_, _) => _profileAutoUpdater.reschedule(),
+    );
     SystemNavigator.setFrameworkHandlesBack(true);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       if (globalState.navigatorKey.currentContext != null) {
@@ -99,7 +110,9 @@ class ApplicationState extends ConsumerState<Application> {
       } else {
         exit(0);
       }
-      _autoUpdateProfilesTask();
+      if (!mounted) return;
+      _profileAutoUpdater.start();
+      globalState.isBackground.addListener(_checkProfilesOnResume);
       _initLink();
       unawaited(app?.initShortcuts());
     });
@@ -134,14 +147,10 @@ class ApplicationState extends ConsumerState<Application> {
     });
   }
 
-  void _autoUpdateProfilesTask() {
-    _autoUpdateProfilesTaskTimer = Timer(const Duration(minutes: 20), () async {
-      await ref.read(profilesActionProvider.notifier).autoUpdateProfiles();
-      if (!mounted) {
-        return;
-      }
-      _autoUpdateProfilesTask();
-    });
+  void _checkProfilesOnResume() {
+    if (!globalState.isBackground.value) {
+      unawaited(_profileAutoUpdater.check());
+    }
   }
 
   Future<void> _handleConnectivityChanged(
@@ -230,7 +239,8 @@ class ApplicationState extends ConsumerState<Application> {
   @override
   void dispose() {
     linkManager.destroy();
-    _autoUpdateProfilesTaskTimer?.cancel();
+    globalState.isBackground.removeListener(_checkProfilesOnResume);
+    _profileAutoUpdater.dispose();
     super.dispose();
   }
 }

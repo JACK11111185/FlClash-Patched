@@ -57,23 +57,6 @@ class ProfilesAction extends _$ProfilesAction {
     return prepared;
   }
 
-  Future<void> autoUpdateProfiles() async {
-    for (final profile in ref.read(profilesProvider)) {
-      if (!profile.autoUpdate) continue;
-      final isNotNeedUpdate = profile.lastUpdateDate
-          ?.add(profile.autoUpdateDuration)
-          .isBeforeNow;
-      if (isNotNeedUpdate == false || profile.type == ProfileType.file) {
-        continue;
-      }
-      try {
-        await updateProfile(profile);
-      } catch (e) {
-        commonPrint.log(compactError(e), logLevel: LogLevel.warning);
-      }
-    }
-  }
-
   void putProfile(Profile profile) {
     ref.read(profilesProvider.notifier).put(profile);
     if (ref.read(currentProfileIdProvider) != null) return;
