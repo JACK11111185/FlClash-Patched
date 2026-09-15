@@ -167,7 +167,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
                       hintBuilder: (fraction) {
                         final index = (fraction * (requests.length - 1))
                             .round();
-                        return requests[index].start.showFull;
+                        return requests[index].start.toLocal().showFull;
                       },
                       child: ScrollToEndBox(
                         controller: _scrollController,

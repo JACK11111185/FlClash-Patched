@@ -277,7 +277,7 @@ class _TrackerInfoDetailViewState extends State<TrackerInfoDetailView> {
           items: _buildRows([
             (
               appLocalizations.creationTime,
-              trackerInfo.start.showFull,
+              trackerInfo.start.toLocal().showFull,
               null,
               null,
             ),

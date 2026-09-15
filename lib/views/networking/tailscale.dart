@@ -363,7 +363,7 @@ class _TailscaleNodeDetailsDialog extends StatelessWidget {
       if (node.keyExpiry != null)
         (
           name: appLocalizations.tailscaleKeyExpiry,
-          value: node.keyExpiry!.showFull,
+          value: node.keyExpiry!.toLocal().showFull,
           copyable: false,
         ),
       for (var index = 0; index < node.endpoints.length; index++)
