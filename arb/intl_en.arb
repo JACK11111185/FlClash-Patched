@@ -87,6 +87,8 @@
   "importFromURL": "Import from URL",
   "submit": "Submit",
   "createProfileFromUrlTip": "Do you want to create a profile from {url}?",
+  "newProfile": "New",
+  "newProfileDesc": "Write a profile manually",
   "create": "Create",
   "pleaseUploadValidQrcode": "Please upload a valid QR code",
   "blacklistMode": "Blacklist mode",

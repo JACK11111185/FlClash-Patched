@@ -908,6 +908,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "No P2P outbound in the current configuration",
     ),
     "neutralScheme": MessageLookupByLibrary.simpleMessage("Neutral"),
+    "newProfile": MessageLookupByLibrary.simpleMessage("New"),
+    "newProfileDesc": MessageLookupByLibrary.simpleMessage(
+      "Write a profile manually",
+    ),
     "nextMatch": MessageLookupByLibrary.simpleMessage("Next match"),
     "noData": MessageLookupByLibrary.simpleMessage("No data"),
     "noFilterCondition": MessageLookupByLibrary.simpleMessage(

@@ -685,6 +685,21 @@ class AppLocalizations {
     );
   }
 
+  /// `New`
+  String get newProfile {
+    return Intl.message('New', name: 'newProfile', desc: '', args: []);
+  }
+
+  /// `Write a profile manually`
+  String get newProfileDesc {
+    return Intl.message(
+      'Write a profile manually',
+      name: 'newProfileDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Create`
   String get create {
     return Intl.message('Create', name: 'create', desc: '', args: []);
