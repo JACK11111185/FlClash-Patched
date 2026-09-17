@@ -748,6 +748,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkType": MessageLookupByLibrary.simpleMessage("ネットワーク種別"),
     "networking": MessageLookupByLibrary.simpleMessage("メッシュネットワーク"),
     "networkingDesc": MessageLookupByLibrary.simpleMessage("P2P ネットワークの状態を表示"),
+    "networkingError": MessageLookupByLibrary.simpleMessage("エラー"),
     "networkingNoOutbounds": MessageLookupByLibrary.simpleMessage(
       "現在の設定に P2P アウトバウンドはありません",
     ),

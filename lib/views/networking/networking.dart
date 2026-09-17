@@ -400,7 +400,7 @@ class _NetworkingViewState extends ConsumerState<NetworkingView>
       OverlayNetworkState.error => switch (status.rawState) {
         'access-denied' => appLocalizations.accessDenied,
         'not-found' => appLocalizations.networkNotFound,
-        _ => status.error.isNotEmpty ? status.error : appLocalizations.status,
+        _ => appLocalizations.networkingError,
       },
       OverlayNetworkState.unknown =>
         status.rawState.isNotEmpty ? status.rawState : appLocalizations.status,
@@ -647,7 +647,7 @@ class _NetworkingViewState extends ConsumerState<NetworkingView>
                   height: 20,
                   child: CommonCircleLoading(),
                 )
-              : const Icon(Icons.refresh),
+              : const Icon(Icons.sync),
         ),
       ],
       body: _buildBody(context, proxies),

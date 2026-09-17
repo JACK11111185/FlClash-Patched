@@ -6350,6 +6350,11 @@ class AppLocalizations {
     return Intl.message('Networking', name: 'networking', desc: '', args: []);
   }
 
+  /// `Error`
+  String get networkingError {
+    return Intl.message('Error', name: 'networkingError', desc: '', args: []);
+  }
+
   /// `View status of P2P networks`
   String get networkingDesc {
     return Intl.message(

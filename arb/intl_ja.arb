@@ -761,6 +761,7 @@
   "tailscaleHealthWarnings": "ヘルス警告",
   "tailscaleNeedsMachineAuth": "デバイスの承認が必要",
   "networking": "メッシュネットワーク",
+  "networkingError": "エラー",
   "networkingDesc": "P2P ネットワークの状態を表示",
   "networkingNoOutbounds": "現在の設定に P2P アウトバウンドはありません",
   "easyTierPeerId": "ピア ID",

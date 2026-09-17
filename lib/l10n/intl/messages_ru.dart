@@ -939,6 +939,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkingDesc": MessageLookupByLibrary.simpleMessage(
       "Просмотр состояния P2P-сетей",
     ),
+    "networkingError": MessageLookupByLibrary.simpleMessage("Ошибка"),
     "networkingNoOutbounds": MessageLookupByLibrary.simpleMessage(
       "В текущей конфигурации нет исходящих P2P-подключений",
     ),
