@@ -416,29 +416,15 @@ class _NetworkingViewState extends ConsumerState<NetworkingView>
     ].join(' · ');
   }
 
-  Widget? _statusErrorItem(
-    BuildContext context,
-    _NetworkingProxy proxy,
-    OverlayNetworkStatus status,
-  ) {
+  Widget? _statusErrorItem(BuildContext context, OverlayNetworkStatus status) {
     if (status.error.isEmpty) {
       return null;
     }
-    final key = _key(proxy);
     final label = _stateLabel(context, status);
     return ListItem(
       leading: Icon(Icons.error_outline, color: context.colorScheme.error),
       title: Text(label),
       subtitle: status.error == label ? null : Text(status.error),
-      trailing: IconButton(
-        tooltip: context.appLocalizations.sync,
-        onPressed: _activating.contains(key)
-            ? null
-            : () => _activateNetwork(proxy),
-        icon: _activating.contains(key)
-            ? const SizedBox.square(dimension: 18, child: CommonCircleLoading())
-            : const Icon(Icons.refresh),
-      ),
     );
   }
 
@@ -458,18 +444,13 @@ class _NetworkingViewState extends ConsumerState<NetworkingView>
         ListItem(
           leading: Icon(Icons.error_outline, color: context.colorScheme.error),
           title: Text(error.toString()),
-          trailing: IconButton(
-            tooltip: context.appLocalizations.sync,
-            onPressed: () => _loadDetails([proxy], force: true),
-            icon: const Icon(Icons.refresh),
-          ),
         ),
       ];
     }
     final status = _statuses[key];
     final statusErrorItem = status == null
         ? null
-        : _statusErrorItem(context, proxy, status);
+        : _statusErrorItem(context, status);
     final activationItem =
         status != null &&
             const {
