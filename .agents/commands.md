@@ -12,6 +12,7 @@ Full package build, including Go core, Flutter, and packaging, runs through `set
 
 ```bash
 dart setup.dart macos
+dart setup.dart macos --arch amd64  # Intel package, including on an Apple Silicon host
 dart setup.dart linux
 dart setup.dart windows
 dart setup.dart android

@@ -299,6 +299,18 @@ hooks:
       expect(setup.packagesNotBuildingAssets('name: x\n'), isEmpty);
     });
 
+    test('pins all macOS targets to the requested package architecture', () {
+      expect(
+        setup.createMacosBuildConfig('amd64'),
+        'ARCHS = x86_64\nEXCLUDED_ARCHS = arm64\n',
+      );
+      expect(
+        setup.createMacosBuildConfig('arm64'),
+        'ARCHS = arm64\nEXCLUDED_ARCHS = x86_64\n',
+      );
+      expect(() => setup.createMacosBuildConfig('arm'), throwsArgumentError);
+    });
+
     test('packages every Linux format on every architecture', () {
       expect(
         setup.createPackageTargets('linux', null),

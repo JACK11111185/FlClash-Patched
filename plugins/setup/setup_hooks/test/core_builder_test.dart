@@ -126,14 +126,16 @@ void main() {
       expect(request.androidToolchain, isNull);
     });
 
-    test('skips the macOS slice the host does not run', () {
-      const builder = CoreBuilder(hostArchitecture: Architecture.arm64);
+    test('builds the requested macOS architecture regardless of host', () {
+      const builder = CoreBuilder();
 
       expect(
-        builder.requestFor(
-          buildInput(os: OS.macOS, architecture: Architecture.x64),
-        ),
-        isNull,
+        builder
+            .requestFor(
+              buildInput(os: OS.macOS, architecture: Architecture.x64),
+            )!
+            .target,
+        Target.macosAmd64,
       );
       expect(
         builder

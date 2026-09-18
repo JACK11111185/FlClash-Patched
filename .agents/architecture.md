@@ -497,10 +497,12 @@ Platform projects copy the artifacts out of `libclash/`; application code must n
   `setup_hooks/bin/build_ios.dart` before compiling sources: Runner depends on NECore, so Runner's Flutter hook is
   too late to supply the extension's headers on a clean build. Both entry points share `buildPlatform` and its cache.
   Rust IPC and global hotkeys remain desktop-only.
-- macOS: a standalone `FlClashCore`. `Release.xcconfig` pins release and profile `ARCHS` to the host because
-  flutter_tools otherwise builds a universal binary and every artifact ships one slice; the hook skips a non-host slice
-  for the same reason. The `Stage Core` phase copies the Core after the hook may have rewritten it and fails when it is
-  missing or lacks a slice for `ARCHS`, so a skipped hook cannot stage a stale Core silently.
+- macOS: a standalone `FlClashCore`. `Release.xcconfig` defaults release and profile `ARCHS` to the host because
+  every artifact ships one slice. `setup.dart macos --arch amd64|arm64` passes an architecture-specific
+  `XCODE_XCCONFIG_FILE` to the packaging process, overriding `ARCHS` and `EXCLUDED_ARCHS` across all Xcode targets.
+  The hook builds the requested target even when it differs from the host. The `Stage Core` phase copies the Core
+  after the hook may have rewritten it and fails when it is missing or lacks a slice for `ARCHS`, so a skipped hook
+  cannot stage a stale Core silently.
 - Linux and Windows: `FlClashCore`, the Rust `FlClashHelperService`, and a `manifest.json` holding `coreSha256`; the
   Core builds first because the Helper embeds its hash. The CMake `install` rules copy them, and the Windows bundle
   places `manifest.json` beside the executable. A Helper running from a Debug build keeps its exe open and the install

@@ -75,9 +75,18 @@ Future<void> main(List<String> args) async {
     );
     exit(1);
   }
-  final arch = _detectArch();
+  final targetArch = results['arch'] as String?;
+  if (targetArch != null &&
+      (platform != 'android' && platform != 'macos' ||
+          platform == 'macos' && targetArch == 'arm')) {
+    stderr.writeln('--arch supports Android and macOS (arm64, amd64) only.');
+    exit(64);
+  }
+  final arch = platform == 'macos'
+      ? targetArch ?? _detectArch()
+      : _detectArch();
   final targets = createPackageTargets(platform, results['targets']);
-  final androidArch = results['arch'] as String?;
+  final androidArch = platform == 'android' ? targetArch : null;
   final verbose = results['verbose'] as bool;
   final iosExportMethod = results['ipa-export-method'] as String;
   final iosExportOptionsPlist = results['ipa-export-options-plist'] as String?;
@@ -126,7 +135,7 @@ ArgParser createSetupArgParser() {
       'arch',
       valueHelp: 'arm,arm64,amd64',
       allowed: ['arm', 'arm64', 'amd64'],
-      help: 'Target architecture (Android only)',
+      help: 'Target architecture (Android; macOS: arm64 or amd64)',
     )
     ..addOption(
       'ipa-export-method',
@@ -193,6 +202,19 @@ List<String> createFlutterBuildArgs({
 
 Map<String, String> createBuildEnvironment(String env) {
   return {'APP_ENV': env};
+}
+
+String createMacosBuildConfig(String arch) {
+  final (target, excluded) = switch (arch) {
+    'amd64' => ('x86_64', 'arm64'),
+    'arm64' => ('arm64', 'x86_64'),
+    _ => throw ArgumentError.value(
+      arch,
+      'arch',
+      'Unsupported macOS architecture',
+    ),
+  };
+  return 'ARCHS = $target\nEXCLUDED_ARCHS = $excluded\n';
 }
 
 /// Packages whose build hook `pubspec.yaml` turns into a no-op.
@@ -292,6 +314,14 @@ Future<int> _package(
     return activateResult.exitCode;
   }
 
+  final buildEnvironment = <String, String>{};
+  if (platform == 'macos') {
+    final config = File(p.join(rootDir, '.dart_tool', 'macos-$arch.xcconfig'));
+    await config.parent.create(recursive: true);
+    await config.writeAsString(createMacosBuildConfig(arch));
+    buildEnvironment['XCODE_XCCONFIG_FILE'] = config.path;
+  }
+
   final process = await Process.start(
     'flutter_distributor',
     [
@@ -308,6 +338,7 @@ Future<int> _package(
       ...descriptionArgs,
     ],
     includeParentEnvironment: true,
+    environment: buildEnvironment,
     runInShell: Platform.isWindows,
   );
 

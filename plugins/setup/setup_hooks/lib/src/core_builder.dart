@@ -19,14 +19,9 @@ bool buildsAssets(BuildInput input) =>
     input.userDefines['build_assets'] != false;
 
 final class CoreBuilder implements Builder {
-  const CoreBuilder({
-    CoreBuildFunction build = buildPlatform,
-    Architecture? hostArchitecture,
-  }) : _build = build,
-       _hostArchitecture = hostArchitecture;
+  const CoreBuilder({CoreBuildFunction build = buildPlatform}) : _build = build;
 
   final CoreBuildFunction _build;
-  final Architecture? _hostArchitecture;
 
   @override
   Future<void> run({
@@ -115,12 +110,6 @@ final class CoreBuilder implements Builder {
       final other => throw BuildException('No Core build for $platform $other'),
     };
     final target = Target.resolve(platform: platform, goarch: goarch);
-
-    final host = _hostArchitecture ?? Architecture.current;
-    if (code.targetOS == OS.macOS && code.targetArchitecture != host) {
-      _log.info('Skipping non-host macOS slice: $target');
-      return null;
-    }
 
     final rootDir = repositoryRoot(input);
     return BuildRequest(
