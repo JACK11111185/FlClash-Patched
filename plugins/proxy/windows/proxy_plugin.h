@@ -36,7 +36,7 @@ class ProxyPlugin : public flutter::Plugin {
  private:
   flutter::PluginRegistrarWindows* registrar_ = nullptr;
   int window_proc_id_ = -1;
-  // Whether this process is the one that pointed Windows at a proxy.
+  // A failed setup or cleanup can leave proxy settings applied.
   bool proxy_applied_ = false;
 };
 

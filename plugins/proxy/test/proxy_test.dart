@@ -383,6 +383,23 @@ USB 10/100/1000 LAN
       });
     });
 
+    test('forwards conditional and unconditional Windows cleanup', () async {
+      final calls = <MethodCall>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(proxy.methodChannel, (call) async {
+            calls.add(call);
+            return true;
+          });
+
+      expect(await proxy.stopProxy(onlyIfNeeded: true), isTrue);
+      expect(await proxy.stopProxy(), isTrue);
+      expect(calls.map((call) => call.method), ['StopProxy', 'StopProxy']);
+      expect(calls.map((call) => call.arguments), [
+        {'onlyIfNeeded': true},
+        {'onlyIfNeeded': false},
+      ]);
+    });
+
     test('maps a null native response to false', () async {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(proxy.methodChannel, (_) async => null);

@@ -244,7 +244,7 @@ final class SystemActionProvider extends $NotifierProvider<SystemAction, void> {
   }
 }
 
-String _$systemActionHash() => r'6dd0e8ac3e58e9b17c1149fd72cb723855c1d940';
+String _$systemActionHash() => r'abd51eb0040c5e54b23d3fca6cc1a62d7d727d28';
 
 abstract class _$SystemAction extends $Notifier<void> {
   void build();

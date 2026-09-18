@@ -232,8 +232,35 @@ namespace proxy
   {
     if (method_call.method_name() == "StopProxy")
     {
+      bool only_if_needed = false;
+      const auto* value = method_call.arguments();
+      if (value != nullptr && !std::holds_alternative<std::monostate>(*value))
+      {
+        const auto* arguments = std::get_if<flutter::EncodableMap>(value);
+        if (arguments == nullptr)
+        {
+          result->Error("bad_args", "StopProxy requires an argument map");
+          return;
+        }
+        const auto flag = arguments->find(flutter::EncodableValue("onlyIfNeeded"));
+        if (flag != arguments->end())
+        {
+          const auto* enabled = std::get_if<bool>(&flag->second);
+          if (enabled == nullptr)
+          {
+            result->Error("bad_args", "StopProxy onlyIfNeeded must be a bool");
+            return;
+          }
+          only_if_needed = *enabled;
+        }
+      }
+      if (only_if_needed && !proxy_applied_)
+      {
+        result->Success(true);
+        return;
+      }
       const bool stopped = stopProxy();
-      proxy_applied_ = proxy_applied_ && !stopped;
+      proxy_applied_ = !stopped;
       result->Success(stopped);
     }
     else if (method_call.method_name() == "StartProxy")
