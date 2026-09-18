@@ -11,16 +11,21 @@ void main(List<String> args) async {
     }
     await FlutterRustBridgeNativeAssetsBuilder(
       cratePath: 'rust',
-      extraCargoEnvironmentVariables: _bindgenEnvironment(input),
+      extraCargoEnvironmentVariables: _cargoEnvironment(input),
     ).run(input: input, output: output);
   });
 }
 
 // rquickjs runs bindgen on Android, which must load the NDK's libclang; Linux
 // NDKs before r26 keep it under lib64, later ones and every macOS NDK under lib.
-Map<String, String> _bindgenEnvironment(BuildInput input) {
+Map<String, String> _cargoEnvironment(BuildInput input) {
   if (!input.config.buildCodeAssets) return const {};
   final code = input.config.code;
+  final environment = {
+    // Rust stripping can misalign Mach-O LINKEDIT (rust-lang/rust#157750).
+    if (code.targetOS == OS.macOS || code.targetOS == OS.iOS)
+      'CARGO_PROFILE_RELEASE_STRIP': 'none',
+  };
   if (code.targetOS == OS.iOS) {
     final sdk = code.iOS.targetSdk == IOSSdk.iPhoneOS
         ? 'iphoneos'
@@ -41,15 +46,14 @@ Map<String, String> _bindgenEnvironment(BuildInput input) {
     final sdkPath = xcrun(['--show-sdk-path']);
     final clang = xcrun(['--find', 'clang']);
     return {
-      // Rust stripping can misalign Mach-O LINKEDIT (rust-lang/rust#157750).
-      'CARGO_PROFILE_RELEASE_STRIP': 'none',
+      ...environment,
       'LIBCLANG_PATH': '${File(clang).parent.parent.path}/lib',
       'BINDGEN_EXTRA_CLANG_ARGS': '-isysroot "$sdkPath"',
       'IPHONEOS_DEPLOYMENT_TARGET': '${code.iOS.targetVersion}.0',
     };
   }
   if (code.targetOS != OS.android) {
-    return const {};
+    return environment;
   }
   final compiler = input.config.code.cCompiler?.compiler;
   if (compiler == null) {
