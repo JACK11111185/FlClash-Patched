@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -409,6 +410,10 @@ func applyConfig(params *SetupParams) error {
 	patchSelectGroup(params.SelectedMap)
 	updateListeners(cfg)
 	reconcileGeoUpdater()
+
+	if features.WithLowMemory {
+		debug.FreeOSMemory()
+	}
 	return err
 }
 
