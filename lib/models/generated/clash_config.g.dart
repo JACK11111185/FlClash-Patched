@@ -453,7 +453,7 @@ _PatchClashConfig _$PatchClashConfigFromJson(Map<String, dynamic> json) =>
             json['log-level'],
             unknownValue: LogLevel.error,
           ) ??
-          LogLevel.error,
+          LogLevel.info,
       ipv6: json['ipv6'] as bool? ?? false,
       findProcessMode:
           $enumDecodeNullable(
