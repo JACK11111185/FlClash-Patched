@@ -539,7 +539,7 @@ private final class TrayMenuItemView: NSView {
             backgroundColor = NSColor.systemOrange.withAlphaComponent(
                 enabled ? 1 : 0.45
             )
-            foregroundColor = .black
+            foregroundColor = .white
         case .secondary:
             return
         }
