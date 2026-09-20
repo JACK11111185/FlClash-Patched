@@ -345,7 +345,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Сворачивать панель быстрых настроек",
     ),
     "collapseQuickSettingsPanelDesc": MessageLookupByLibrary.simpleMessage(
-      "Сворачивать панель быстрых настроек после нажатия плитки FlClash",
+      "Сворачивать панель быстрых настроек после нажатия плитки",
     ),
     "color": MessageLookupByLibrary.simpleMessage("Цвет"),
     "colorSchemes": MessageLookupByLibrary.simpleMessage("Цветовые схемы"),

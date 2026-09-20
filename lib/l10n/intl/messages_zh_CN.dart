@@ -245,7 +245,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "收起快捷设置面板",
     ),
     "collapseQuickSettingsPanelDesc": MessageLookupByLibrary.simpleMessage(
-      "点击 FlClash 快捷设置开关后收起面板",
+      "点击快捷设置开关后收起面板",
     ),
     "color": MessageLookupByLibrary.simpleMessage("颜色"),
     "colorSchemes": MessageLookupByLibrary.simpleMessage("配色方案"),

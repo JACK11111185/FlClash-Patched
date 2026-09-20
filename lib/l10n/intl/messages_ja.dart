@@ -265,7 +265,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "クイック設定パネルを閉じる",
     ),
     "collapseQuickSettingsPanelDesc": MessageLookupByLibrary.simpleMessage(
-      "FlClash タイルをタップした後にクイック設定パネルを閉じます",
+      "タイルをタップした後にクイック設定パネルを閉じます",
     ),
     "color": MessageLookupByLibrary.simpleMessage("カラー"),
     "colorSchemes": MessageLookupByLibrary.simpleMessage("カラースキーム"),

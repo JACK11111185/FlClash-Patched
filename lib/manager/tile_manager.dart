@@ -31,7 +31,9 @@ class _TileContainerState extends ConsumerState<TileManager> with TileListener {
       return;
     }
     unawaited(ref.read(setupActionProvider.notifier).setRunning(true));
-    unawaited(app?.tip(currentAppLocalizations.startVpn));
+    if (ref.read(appSettingProvider).collapseQuickSettingsPanel) {
+      unawaited(app?.tip(currentAppLocalizations.startVpn));
+    }
     super.onStart();
   }
 
@@ -41,7 +43,9 @@ class _TileContainerState extends ConsumerState<TileManager> with TileListener {
       return;
     }
     unawaited(ref.read(setupActionProvider.notifier).setRunning(false));
-    unawaited(app?.tip(currentAppLocalizations.stopVpn));
+    if (ref.read(appSettingProvider).collapseQuickSettingsPanel) {
+      unawaited(app?.tip(currentAppLocalizations.stopVpn));
+    }
     super.onStop();
   }
 

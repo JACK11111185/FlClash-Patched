@@ -102,7 +102,9 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
             tile.handleStop()
             return
         }
-        host.showToast(host.stopMessage)
+        if (sharedState.collapseQuickSettingsPanel) {
+            host.showToast(host.stopMessage)
+        }
         requestStop().await()
     }
 
@@ -182,7 +184,9 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
 
     private suspend fun setupCore(): Boolean {
         applySharedState()
-        host.showToast(host.startMessage)
+        if (sharedState.collapseQuickSettingsPanel) {
+            host.showToast(host.startMessage)
+        }
         return host.quickSetup(
             initParams(host.homeDirPath, host.sdkInt),
             Gson().toJson(sharedState.setupParams),
