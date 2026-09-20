@@ -77,23 +77,33 @@ int main(int argc, char **argv) {
     GtkWidget *other_menu =
         gtk_menu_item_get_submenu(GTK_MENU_ITEM(other_item));
     check(child_count(menu) == 2, "root menu missing groups");
-    check(child_count(first) == 1 && child_count(other_menu) == 1,
-          "export or its synthetic show populated unopened submenus");
-    check(find_menu_item(menu, "node-1024") == nullptr,
-          "unopened node has a native widget");
+    check(child_count(first) == 2000 && child_count(other_menu) == 1,
+          "initial menu is missing submenu rows");
+    GtkWidget *selected = find_menu_item(menu, "node-1024");
+    check(selected != nullptr, "unopened node has no native widget");
+    GtkWidget *nested_item = child_at(other_menu, 0);
+    GtkWidget *nested_menu =
+        gtk_menu_item_get_submenu(GTK_MENU_ITEM(nested_item));
+    check(child_count(nested_menu) == 1 &&
+              find_menu_item(menu, "node-5000") != nullptr,
+          "initial menu is missing nested submenu rows");
     auto *first_exported = dbusmenu_gtk_parse_get_cached_item(first_item);
     check(g_strcmp0(dbusmenu_menuitem_property_get(
                         first_exported, DBUSMENU_MENUITEM_PROP_CHILD_DISPLAY),
                     "submenu") == 0,
-          "deferred group is not exported as a submenu");
+          "group is not exported as a submenu");
+    check(g_list_length(dbusmenu_menuitem_get_children(first_exported)) == 2000,
+          "initial export is missing submenu rows");
+    auto *nested_exported = dbusmenu_gtk_parse_get_cached_item(nested_item);
+    check(g_list_length(dbusmenu_menuitem_get_children(nested_exported)) == 1,
+          "initial export is missing nested submenu rows");
 
     g_autoptr(FlValue) update = fl_value_new_map();
     fl_value_set_string_take(update, "key", fl_value_new_string("node-1024"));
     fl_value_set_string_take(update, "sublabel",
                              fl_value_new_string("Timeout"));
     fl_value_set_string_take(update, "checked", fl_value_new_bool(true));
-    check(apply_menu_item_update(&plugin, update), "deferred update rejected");
-    check(child_count(first) == 1, "update materialized a submenu");
+    check(apply_menu_item_update(&plugin, update), "unopened update rejected");
 
     g_autoptr(FlValue) bad_batch = fl_value_new_map();
     FlValue *updates = fl_value_new_list();
@@ -111,37 +121,28 @@ int main(int argc, char **argv) {
               FL_METHOD_SUCCESS_RESPONSE(response))),
           "invalid batch was accepted");
 
-    dbusmenu_menuitem_send_about_to_show(first_exported, nullptr, nullptr);
-    drain_events();
-    check(child_count(first) == 2000, "AboutToShow did not populate children");
-    check(child_count(other_menu) == 1, "sibling submenu populated eagerly");
-    GtkWidget *selected = find_menu_item(menu, "node-1024");
-    check(selected != nullptr, "node not indexed after opening");
     check(g_strcmp0(gtk_menu_item_get_label(GTK_MENU_ITEM(selected)),
                     "香港 & A  (Timeout)") == 0,
-          "deferred update lost");
+          "unopened update lost or invalid batch partially applied");
     check(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(selected)),
-          "deferred checkmark lost");
-    check(g_list_length(dbusmenu_menuitem_get_children(first_exported)) == 2000,
-          "new children did not reach the exported menu");
+          "unopened checkmark update lost");
     dbusmenu_menuitem_send_about_to_show(first_exported, nullptr, nullptr);
-    check(child_count(first) == 2000, "reopening duplicated children");
+    drain_events();
+    check(child_count(first) == 2000 &&
+              find_menu_item(menu, "node-1024") == selected,
+          "opening rebuilt submenu rows");
+    check(dbusmenu_gtk_parse_get_cached_item(first_item) == first_exported &&
+              g_list_length(dbusmenu_menuitem_get_children(first_exported)) ==
+                  2000,
+          "opening changed the exported submenu");
     fl_value_set_string_take(update, "sublabel", fl_value_new_string("17 ms"));
     check(apply_menu_item_update(&plugin, update), "visible update rejected");
     check(g_strcmp0(gtk_menu_item_get_label(GTK_MENU_ITEM(selected)),
                     "香港 & A  (17 ms)") == 0,
           "visible update lost");
 
-    gtk_menu_item_select(GTK_MENU_ITEM(other_item));
-    GtkWidget *nested_item = child_at(other_menu, 0);
-    GtkWidget *nested_menu =
-        gtk_menu_item_get_submenu(GTK_MENU_ITEM(nested_item));
-    check(child_count(nested_menu) == 1, "nested submenu was eager");
     fl_value_set_string_take(update, "key", fl_value_new_string("node-5000"));
     check(apply_menu_item_update(&plugin, update), "nested update rejected");
-    gtk_menu_item_select(GTK_MENU_ITEM(nested_item));
-    check(find_menu_item(menu, "node-5000") != nullptr,
-          "local GTK selection did not populate submenu");
     check(g_strcmp0(
               gtk_menu_item_get_label(GTK_MENU_ITEM(child_at(nested_menu, 0))),
               "香港 & A  (17 ms)") == 0,

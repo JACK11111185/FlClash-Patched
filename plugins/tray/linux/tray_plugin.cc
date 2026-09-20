@@ -10,7 +10,6 @@
 #endif
 
 #include <cstring>
-#include <initializer_list>
 
 #define TRAY_PLUGIN(obj) \
   (G_TYPE_CHECK_INSTANCE_CAST((obj), tray_plugin_get_type(), TrayPlugin))
@@ -169,44 +168,10 @@ static void update_menu_label(GtkWidget* item, FlValue* entry) {
   gtk_menu_item_set_label(GTK_MENU_ITEM(item), text);
 }
 
-static void populate_menu(GtkWidget* menu, FlValue* items);
-
-static void on_submenu_open(GtkMenuItem*, gpointer user_data) {
-  GtkWidget* menu = GTK_WIDGET(user_data);
-  g_autoptr(FlValue) items = static_cast<FlValue*>(
-      g_object_steal_data(G_OBJECT(menu), "tray-menu-deferred"));
-  if (items == nullptr) {
-    return;
-  }
-  GList* children = gtk_container_get_children(GTK_CONTAINER(menu));
-  for (GList* child = children; child != nullptr; child = child->next) {
-    gtk_widget_destroy(GTK_WIDGET(child->data));
-  }
-  g_list_free(children);
-  populate_menu(menu, items);
-  gtk_widget_show_all(menu);
-}
-
-static GtkWidget* build_menu(FlValue* items, bool defer_items = false) {
+static GtkWidget* build_menu(FlValue* items) {
   GtkWidget* menu = gtk_menu_new();
-  if (defer_items && items != nullptr &&
-      fl_value_get_type(items) == FL_VALUE_TYPE_LIST &&
-      fl_value_get_length(items) > 0) {
-    g_object_set_data_full(G_OBJECT(menu), "tray-menu-deferred",
-                           fl_value_ref(items),
-                           reinterpret_cast<GDestroyNotify>(fl_value_unref));
-    GtkWidget* placeholder = gtk_menu_item_new_with_label("");
-    gtk_widget_set_sensitive(placeholder, FALSE);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), placeholder);
-  } else {
-    populate_menu(menu, items);
-  }
-  return menu;
-}
-
-static void populate_menu(GtkWidget* menu, FlValue* items) {
   if (items == nullptr || fl_value_get_type(items) != FL_VALUE_TYPE_LIST) {
-    return;
+    return menu;
   }
 
   for (size_t i = 0; i < fl_value_get_length(items); i++) {
@@ -239,14 +204,8 @@ static void populate_menu(GtkWidget* menu, FlValue* items) {
                                      bool_value(entry, "checked", false));
     } else if (strcmp(type, "submenu") == 0) {
       item = gtk_menu_item_new_with_label(label);
-      GtkWidget* submenu = build_menu(fl_value_lookup_string(entry, "items"),
-                                      true);
+      GtkWidget* submenu = build_menu(fl_value_lookup_string(entry, "items"));
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
-      // libdbusmenu forwards AboutToShow to activate; it fakes show at export.
-      g_signal_connect_object(item, "activate", G_CALLBACK(on_submenu_open),
-                               submenu, static_cast<GConnectFlags>(0));
-      g_signal_connect_object(item, "select", G_CALLBACK(on_submenu_open),
-                               submenu, static_cast<GConnectFlags>(0));
       dispatches = false;
     } else {
       item = gtk_menu_item_new_with_label(label);
@@ -274,48 +233,7 @@ static void populate_menu(GtkWidget* menu, FlValue* items) {
 
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
   }
-}
-
-static FlValue* find_deferred_entry(FlValue* items, const char* key) {
-  if (items == nullptr || fl_value_get_type(items) != FL_VALUE_TYPE_LIST) {
-    return nullptr;
-  }
-  for (size_t i = 0; i < fl_value_get_length(items); i++) {
-    FlValue* entry = fl_value_get_list_value(items, i);
-    if (fl_value_get_type(entry) != FL_VALUE_TYPE_MAP) {
-      continue;
-    }
-    if (g_strcmp0(string_value(entry, "key"), key) == 0) {
-      return entry;
-    }
-    FlValue* match = find_deferred_entry(
-        fl_value_lookup_string(entry, "items"), key);
-    if (match != nullptr) {
-      return match;
-    }
-  }
-  return nullptr;
-}
-
-static FlValue* find_deferred_menu_item(GtkWidget* menu, const char* key) {
-  auto* items = static_cast<FlValue*>(
-      g_object_get_data(G_OBJECT(menu), "tray-menu-deferred"));
-  if (items != nullptr) {
-    return find_deferred_entry(items, key);
-  }
-  GList* children = gtk_container_get_children(GTK_CONTAINER(menu));
-  FlValue* match = nullptr;
-  for (GList* child = children; child != nullptr; child = child->next) {
-    GtkWidget* submenu = gtk_menu_item_get_submenu(GTK_MENU_ITEM(child->data));
-    if (submenu != nullptr) {
-      match = find_deferred_menu_item(submenu, key);
-      if (match != nullptr) {
-        break;
-      }
-    }
-  }
-  g_list_free(children);
-  return match;
+  return menu;
 }
 
 static GtkWidget* find_menu_item(GtkWidget* menu, const char* key) {
@@ -433,18 +351,7 @@ static bool apply_menu_item_update(TrayPlugin* self, FlValue* args) {
   }
   GtkWidget* item = find_menu_item(self->menu, key);
   if (item == nullptr) {
-    FlValue* entry = find_deferred_menu_item(self->menu, key);
-    if (entry == nullptr) {
-      return false;
-    }
-    for (const char* name : {"label", "sublabel", "sublabelStyle",
-                             "enabled", "checked"}) {
-      FlValue* value = fl_value_lookup_string(args, name);
-      if (value != nullptr) {
-        fl_value_set_string(entry, name, value);
-      }
-    }
-    return true;
+    return false;
   }
 
   update_menu_label(item, args);
@@ -473,8 +380,7 @@ static FlMethodResponse* handle_update_menu_items(TrayPlugin* self,
     FlValue* update = fl_value_get_list_value(updates, i);
     const char* key = string_value(update, "key");
     if (key == nullptr || self->menu == nullptr ||
-        (find_menu_item(self->menu, key) == nullptr &&
-         find_deferred_menu_item(self->menu, key) == nullptr)) {
+        find_menu_item(self->menu, key) == nullptr) {
       return respond(false);
     }
   }

@@ -53,12 +53,12 @@ indicator scale it; Windows loads the path as-is, so point it at a multi-size `.
 Menu item ids are assigned by pre-order position, so an unchanged menu serializes identically across
 rebuilds and click dispatch stays stable while a menu is open.
 
-Native submenus are populated on first expansion on all three platforms. Unopened
+Native submenus are populated on first expansion on macOS and Windows. Unopened
 groups retain their serialized entries, and keyed updates modify those entries
 without creating native rows. Nested groups are deferred independently. Windows
-uses `WM_INITMENUPOPUP` for either popup owner; Linux handles the activation that
-libdbusmenu emits for `AboutToShow` and GTK selection for local menus. Exporting a
-Linux menu or running `show_all` does not populate its deferred groups.
+uses `WM_INITMENUPOPUP` for either popup owner. Linux constructs the complete menu
+tree before exporting it through AppIndicator, so opening a submenu does not
+replace placeholder rows while the host is displaying it.
 
 Proxy group submenus are available on all three desktop platforms. Windows displays
 item sublabels in the right-hand text column; Linux appends them in parentheses so
@@ -105,8 +105,10 @@ libraries and desktop hosts; programmatic menu opening is unsupported.
 
 ## Native menu tests
 
-The standalone CMake tests exercise deferred creation, updates before and after
-expansion, stable command IDs, reopening and cleanup against the native APIs.
+The standalone CMake tests exercise menu creation, updates before and after
+expansion, reopening and cleanup against the native APIs. Linux checks that the
+initial export includes all nested submenu rows and opening preserves them.
+Windows checks deferred creation and stable command IDs.
 Windows also checks system checkmarks versus status icons, live delay and selection
 updates, DPI/theme refreshes, persistent-action keyboard filtering and nested
 session cleanup. These tests use hidden owners and do not send desktop input;
