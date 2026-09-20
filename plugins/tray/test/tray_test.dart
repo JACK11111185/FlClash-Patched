@@ -192,7 +192,7 @@ void main() {
     });
 
     test(
-      '$platform external delay updates invalidate the menu diff snapshot',
+      '$platform reconciles a refreshed menu after live delay updates',
       () async {
         debugDefaultTargetPlatformOverride = platform;
         final spec = _spec(
@@ -205,10 +205,173 @@ void main() {
           TrayMenuItemUpdate(key: 'node', sublabel: '42 ms'),
         ]);
         await Tray.instance.show(spec);
-        expect(showCount(), 2);
+        expect(showCount(), 1);
+        expect((calls.last.arguments as Map)['updates'], [
+          {'key': 'node', 'sublabel': ''},
+        ]);
       },
     );
+
+    test('$platform preserves live delays when selection changes', () async {
+      debugDefaultTargetPlatformOverride = platform;
+      TraySpec menu({String? delay, bool checked = false}) => _spec(
+        menu: [
+          TrayMenuSubmenu(
+            key: 'group',
+            label: 'Group',
+            items: [
+              TrayMenuCheckbox(
+                key: 'node',
+                label: 'Node',
+                checked: checked,
+                sublabel: delay,
+              ),
+            ],
+          ),
+        ],
+      );
+      await Tray.instance.show(menu());
+      await Tray.instance.updateMenuItems(const [
+        TrayMenuItemUpdate(key: 'node', sublabel: '42 ms'),
+      ]);
+      await Tray.instance.show(menu(delay: '42 ms', checked: true));
+
+      expect(showCount(), 1);
+      expect((calls.last.arguments as Map)['updates'], [
+        {'key': 'node', 'checked': true},
+      ]);
+      await Tray.instance.show(menu(delay: '42 ms', checked: true));
+      expect(calls, hasLength(3));
+    });
   }
+
+  group('Windows menu tracking', () {
+    late Completer<void> menuClosed;
+
+    setUp(() {
+      menuClosed = Completer<void>();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(_channel, (call) async {
+            calls.add(call);
+            if (call.method == 'openMenu') {
+              await menuClosed.future;
+            }
+            return true;
+          });
+    });
+
+    TraySpec nodes(List<String> names, void Function(String) onSelected) =>
+        _spec(
+          menu: [
+            for (final name in names)
+              TrayMenuCheckbox(
+                key: name,
+                label: name,
+                checked: false,
+                onSelected: () => onSelected(name),
+              ),
+          ],
+        );
+
+    test(
+      'defers reordering while delays and old callbacks stay live',
+      () async {
+        final selected = <String>[];
+        await Tray.instance.show(nodes(['a', 'b'], selected.add));
+        final open = Tray.instance.openMenu();
+        await Future<void>.delayed(Duration.zero);
+        await Tray.instance.show(nodes(['b', 'a'], selected.add));
+        await Tray.instance.updateMenuItems(const [
+          TrayMenuItemUpdate(key: 'a', sublabel: '1234 ms'),
+        ]);
+        await _emit('onMenuItemSelected', {'id': 1024});
+
+        expect(showCount(), 1);
+        expect(selected, ['a']);
+        expect(calls.last.method, 'updateMenuItems');
+
+        menuClosed.complete();
+        await open;
+
+        expect(showCount(), 2);
+        final menu = (calls.last.arguments as Map)['menu'] as List;
+        expect(menu.map((item) => (item as Map)['key']), ['b', 'a']);
+        expect(menu[1], containsPair('sublabel', '1234 ms'));
+        await _emit('onMenuItemSelected', {'id': 1024});
+        expect(selected, ['a', 'b']);
+      },
+    );
+
+    test('only applies the latest deferred menu', () async {
+      await Tray.instance.show(nodes(['a'], (_) {}));
+      final open = Tray.instance.openMenu();
+      await Future<void>.delayed(Duration.zero);
+      await Tray.instance.show(nodes(['b'], (_) {}));
+      await Tray.instance.show(nodes(['c'], (_) {}));
+      expect(showCount(), 1);
+
+      menuClosed.complete();
+      await open;
+      expect(showCount(), 2);
+      final menu = (calls.last.arguments as Map)['menu'] as List;
+      expect(menu.single, containsPair('key', 'c'));
+    });
+
+    test('a newer unchanged menu cancels a deferred replacement', () async {
+      final spec = nodes(['a'], (_) {});
+      await Tray.instance.show(spec);
+      final open = Tray.instance.openMenu();
+      await Future<void>.delayed(Duration.zero);
+      await Tray.instance.show(nodes(['b'], (_) {}));
+      await Tray.instance.show(spec);
+
+      menuClosed.complete();
+      await open;
+      expect(showCount(), 1);
+    });
+
+    test('hide discards a deferred replacement', () async {
+      await Tray.instance.show(nodes(['a'], (_) {}));
+      final open = Tray.instance.openMenu();
+      await Future<void>.delayed(Duration.zero);
+      await Tray.instance.show(nodes(['b'], (_) {}));
+      await Tray.instance.hide();
+
+      menuClosed.complete();
+      await open;
+      expect(showCount(), 1);
+      expect(Tray.instance.isVisible, isFalse);
+      expect(calls.last.method, 'hide');
+    });
+
+    test(
+      'a failed popup releases deferred work and allows reopening',
+      () async {
+        await Tray.instance.show(nodes(['a'], (_) {}));
+        final open = Tray.instance.openMenu();
+        final failure = expectLater(open, throwsA(isA<PlatformException>()));
+        await Future<void>.delayed(Duration.zero);
+        await Tray.instance.show(nodes(['b'], (_) {}));
+        menuClosed.completeError(PlatformException(code: 'popup_failed'));
+        await failure;
+        expect(showCount(), 2);
+
+        menuClosed = Completer<void>()..complete();
+        await Tray.instance.openMenu();
+        expect(calls.where((call) => call.method == 'openMenu'), hasLength(2));
+      },
+    );
+
+    test('ignores repeated open requests while tracking', () async {
+      await Tray.instance.show(nodes(['a'], (_) {}));
+      final open = Tray.instance.openMenu();
+      await Future<void>.delayed(Duration.zero);
+      await Tray.instance.openMenu();
+      expect(calls.where((call) => call.method == 'openMenu'), hasLength(1));
+      menuClosed.complete();
+      await open;
+    });
+  });
 
   test('menu selection dispatches only for known integer ids', () async {
     var selected = 0;
@@ -392,7 +555,7 @@ void main() {
     ]);
   });
 
-  test('openMenu calls stay ordered behind an in-flight show', () async {
+  test('openMenu waits for an in-flight show and coalesces requests', () async {
     await Tray.instance.show(_spec());
     final gate = Completer<void>();
     showGate = gate;
@@ -406,14 +569,9 @@ void main() {
 
     await Future.wait([stalled, defaultOwner, appOwner]);
     final orderedCalls = calls.skip(1).toList();
-    expect(orderedCalls.map((call) => call.method), [
-      'show',
-      'openMenu',
-      'openMenu',
-    ]);
+    expect(orderedCalls.map((call) => call.method), ['show', 'openMenu']);
     expect(orderedCalls.skip(1).map((call) => call.arguments), [
       {'bringAppToFront': false},
-      {'bringAppToFront': true},
     ]);
   });
 

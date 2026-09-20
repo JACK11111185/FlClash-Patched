@@ -6,23 +6,65 @@ import 'tray_menu.dart';
 import 'tray_spec.dart';
 
 final class EncodedTray {
-  const EncodedTray({
+  EncodedTray({
     required this.icon,
     required this.toolTip,
     required this.menu,
     required this.itemsById,
-    required this.signature,
+    required this.brightness,
   });
 
   final Map<String, Object?> icon;
   final String toolTip;
   final List<Object?> menu;
   final Map<int, TrayMenuItem> itemsById;
-  final String signature;
+  final Brightness? brightness;
+  late final String signature = jsonEncode(<String, Object?>{
+    'icon': icon,
+    'toolTip': toolTip,
+    'brightness': brightness?.name,
+    'menu': menu,
+  });
 }
 
 abstract final class TrayCodec {
   static const int firstItemId = 1024;
+
+  static EncodedTray applyMenuUpdates(
+    EncodedTray previous,
+    List<Map<String, Object?>> updates,
+  ) {
+    final pending = <String, Map<String, Object?>>{};
+    for (final update in updates) {
+      pending.putIfAbsent(update['key']! as String, () => {}).addAll(update);
+    }
+    List<Object?> patch(List<Object?> items) => items.map((value) {
+      if (pending.isEmpty) {
+        return value;
+      }
+      final item = value! as Map<String, Object?>;
+      final update = pending.remove(item['key']);
+      final children = item['items'];
+      if (update == null && children is! List<Object?>) {
+        return item;
+      }
+      return <String, Object?>{
+        ...item,
+        if (update != null)
+          for (final field in update.entries)
+            if (field.key != 'checked' || item['type'] == 'checkbox')
+              field.key: field.value,
+        if (children is List<Object?>) 'items': patch(children),
+      };
+    }).toList();
+    return EncodedTray(
+      icon: previous.icon,
+      toolTip: previous.toolTip,
+      brightness: previous.brightness,
+      menu: patch(previous.menu),
+      itemsById: previous.itemsById,
+    );
+  }
 
   static List<Map<String, Object?>>? menuUpdates(
     EncodedTray previous,
@@ -92,12 +134,7 @@ abstract final class TrayCodec {
       toolTip: spec.toolTip,
       menu: menu,
       itemsById: itemsById,
-      signature: jsonEncode(<String, Object?>{
-        'icon': icon,
-        'toolTip': spec.toolTip,
-        'brightness': spec.brightness?.name,
-        'menu': menu,
-      }),
+      brightness: spec.brightness,
     );
   }
 

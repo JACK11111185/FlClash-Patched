@@ -34,10 +34,16 @@ await Tray.instance.hide();
 - `setTitle` is the incremental path for high-frequency text. It is a no-op where
   `capabilities.title` is false, and while no tray is visible.
 - `updateMenuItems` applies one or more keyed item changes in one serialized
-  platform call.
+  platform call and keeps the menu snapshot in sync for later `show` calls.
 - `hide` is idempotent and returns native state to "`show` was never called", so a later `show`
   rebuilds the tray from scratch.
 - `openMenu` is a no-op where `capabilities.menuControl` is false.
+
+While a Windows menu is open, item updates remain live. A `show` that requires
+rebuilding the menu waits until it closes, retaining only the latest requested
+menu and any subsequent keyed updates. Clicks continue to use the displayed
+menu's callbacks until the replacement is applied. Repeated open requests are
+ignored while tracking, and `hide` discards any deferred replacement.
 
 `TrayIcon.asset` names a bundled PNG and follows Flutter's resolution-aware layout: every
 `2.0x/`, `3.0x/`, `4.0x/` sibling that exists is loaded too. macOS receives them all as

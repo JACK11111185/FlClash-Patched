@@ -45,6 +45,8 @@ final class Tray {
   String _title = '';
   String _requestedTitle = '';
   bool _isVisible = false;
+  bool _isMenuOpen = false;
+  ({TraySpec spec, EncodedTray encoded})? _pendingShow;
 
   Stream<TrayEvent> get events => _events.stream;
 
@@ -85,6 +87,8 @@ final class Tray {
     _title = '';
     _requestedTitle = '';
     _isVisible = false;
+    _isMenuOpen = false;
+    _pendingShow = null;
   }
 
   Future<T> _serialize<T>(Future<T> Function() action) {
@@ -111,11 +115,12 @@ final class Tray {
     return completer.future;
   }
 
-  Future<void> _show(TraySpec spec) async {
+  Future<void> _show(TraySpec spec, [EncodedTray? snapshot]) async {
     if (!capabilities.supported) {
       return;
     }
-    final encoded = TrayCodec.encode(spec);
+    _pendingShow = null;
+    final encoded = snapshot ?? TrayCodec.encode(spec);
     if (_isVisible && encoded.signature == _signature) {
       _itemsById = encoded.itemsById;
       return;
@@ -135,6 +140,10 @@ final class Tray {
         _encoded = encoded;
         return;
       }
+    }
+    if (_isMenuOpen) {
+      _pendingShow = (spec: spec, encoded: encoded);
+      return;
     }
     final isApplied = await _channel
         .invokeMethod<bool>(_methodShow, <String, Object?>{
@@ -172,6 +181,7 @@ final class Tray {
   }
 
   Future<void> _hide() async {
+    _pendingShow = null;
     _itemsById = const {};
     _signature = null;
     _encoded = null;
@@ -184,12 +194,28 @@ final class Tray {
   }
 
   Future<void> _openMenu(bool bringAppToFront) async {
-    if (!capabilities.menuControl || !_isVisible) {
+    if (!capabilities.menuControl || !_isVisible || _isMenuOpen) {
       return;
     }
-    await _channel.invokeMethod(_methodOpenMenu, <String, Object?>{
-      'bringAppToFront': bringAppToFront,
-    });
+    final tracksMenu = defaultTargetPlatform == TargetPlatform.windows;
+    if (tracksMenu) {
+      _isMenuOpen = true;
+    }
+    try {
+      await _channel.invokeMethod(_methodOpenMenu, <String, Object?>{
+        'bringAppToFront': bringAppToFront,
+      });
+    } finally {
+      if (tracksMenu) {
+        _isMenuOpen = false;
+        await _serialize(() async {
+          final pending = _pendingShow;
+          if (pending != null) {
+            await _show(pending.spec, pending.encoded);
+          }
+        });
+      }
+    }
   }
 
   Future<bool> _updateMenuItems(List<TrayMenuItemUpdate> updates) async {
@@ -199,13 +225,24 @@ final class Tray {
     if (updates.isEmpty) {
       return true;
     }
+    final encodedUpdates = updates.map(_encodeMenuItemUpdate).toList();
     final applied = await _channel.invokeMethod<bool>(
       _methodUpdateMenuItems,
-      <String, Object?>{'updates': updates.map(_encodeMenuItemUpdate).toList()},
+      <String, Object?>{'updates': encodedUpdates},
     );
     if (applied == true) {
       _signature = null;
-      _encoded = null;
+      final previous = _encoded;
+      if (previous != null) {
+        _encoded = TrayCodec.applyMenuUpdates(previous, encodedUpdates);
+      }
+      final pending = _pendingShow;
+      if (pending != null) {
+        _pendingShow = (
+          spec: pending.spec,
+          encoded: TrayCodec.applyMenuUpdates(pending.encoded, encodedUpdates),
+        );
+      }
       return true;
     }
     return false;
