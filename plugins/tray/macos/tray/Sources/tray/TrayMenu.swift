@@ -560,11 +560,16 @@ private final class TrayMenuItemView: NSView {
 
 }
 
-final class TrayMenu: NSMenu {
+final class TrayMenu: NSMenu, NSMenuDelegate {
     private let onSelect: (Int) -> Void
     private weak var hoveredCustomView: TrayMenuItemView?
+    private var deferredItems: [[String: Any]]?
 
-    init(items: [[String: Any]], onSelect: @escaping (Int) -> Void) {
+    init(
+        items: [[String: Any]],
+        deferItems: Bool = false,
+        onSelect: @escaping (Int) -> Void
+    ) {
         self.onSelect = onSelect
         super.init(title: "")
         autoenablesItems = false
@@ -580,8 +585,17 @@ final class TrayMenu: NSMenu {
             name: NSMenu.didEndTrackingNotification,
             object: self
         )
+        if deferItems {
+            deferredItems = items
+            delegate = self
+        } else {
+            populate(items)
+        }
+    }
+
+    private func populate(_ entries: [[String: Any]]) {
         var customViews: [TrayMenuItemView] = []
-        for entry in items {
+        for entry in entries {
             let item = makeItem(entry)
             addItem(item)
             if let view = item.view as? TrayMenuItemView {
@@ -589,6 +603,14 @@ final class TrayMenu: NSMenu {
             }
         }
         updateCustomViewWidths(customViews)
+    }
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        guard let entries = deferredItems else {
+            return
+        }
+        deferredItems = nil
+        populate(entries)
     }
 
     required init(coder: NSCoder) {
@@ -652,6 +674,9 @@ final class TrayMenu: NSMenu {
     }
 
     private func containsMenuItem(_ key: String) -> Bool {
+        if let deferredItems {
+            return Self.containsDeferredItem(key, in: deferredItems)
+        }
         for item in items {
             if item.representedObject as? String == key {
                 return true
@@ -664,12 +689,46 @@ final class TrayMenu: NSMenu {
         return false
     }
 
+    private static func containsDeferredItem(
+        _ key: String,
+        in entries: [[String: Any]]
+    ) -> Bool {
+        entries.contains { entry in
+            entry["key"] as? String == key
+                || containsDeferredItem(key, in: entry["items"] as? [[String: Any]] ?? [])
+        }
+    }
+
+    private static func updateDeferredItem(
+        _ key: String,
+        arguments: [String: Any],
+        entries: inout [[String: Any]]
+    ) -> Bool {
+        for index in entries.indices {
+            if entries[index]["key"] as? String == key {
+                entries[index].merge(arguments) { _, new in new }
+                return true
+            }
+            if var children = entries[index]["items"] as? [[String: Any]],
+               updateDeferredItem(key, arguments: arguments, entries: &children) {
+                entries[index]["items"] = children
+                return true
+            }
+        }
+        return false
+    }
+
     private func applyMenuItemUpdate(
         _ arguments: [String: Any],
         updateWidths: Bool
     ) -> Bool {
         guard let key = arguments["key"] as? String else {
             return false
+        }
+        if var entries = deferredItems {
+            let applied = Self.updateDeferredItem(key, arguments: arguments, entries: &entries)
+            deferredItems = entries
+            return applied
         }
         for item in items {
             if item.representedObject as? String == key {
@@ -761,7 +820,10 @@ final class TrayMenu: NSMenu {
             item.action = item.isEnabled ? #selector(didSelectItem(_:)) : nil
         case .submenu:
             let children = entry["items"] as? [[String: Any]] ?? []
-            setSubmenu(TrayMenu(items: children, onSelect: onSelect), for: item)
+            setSubmenu(
+                TrayMenu(items: children, deferItems: true, onSelect: onSelect),
+                for: item
+            )
         case .action:
             item.target = self
             item.action = item.isEnabled ? #selector(didSelectItem(_:)) : nil
@@ -788,6 +850,9 @@ final class TrayMenu: NSMenu {
     }
 
     private func isCompatible(with entries: [[String: Any]]) -> Bool {
+        if deferredItems != nil {
+            return true
+        }
         guard entries.count == items.count else {
             return false
         }
@@ -821,6 +886,10 @@ final class TrayMenu: NSMenu {
     }
 
     private func apply(_ entries: [[String: Any]]) {
+        if deferredItems != nil {
+            deferredItems = entries
+            return
+        }
         var customViews: [TrayMenuItemView] = []
         for (entry, item) in zip(entries, items) {
             guard let typeName = entry["type"] as? String,

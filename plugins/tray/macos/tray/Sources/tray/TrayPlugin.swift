@@ -55,8 +55,8 @@ public class TrayPlugin: NSObject, FlutterPlugin, NSMenuDelegate {
             let attachedMenu = menu.flatMap {
                 item.statusItem.menu === $0 ? $0 : nil
             }
-            attachedMenu?.appearance = appearance
-            if let attachedMenu, attachedMenu.update(items: items) {
+            menu?.appearance = appearance
+            if let menu, menu.update(items: items) {
                 return true
             }
             let built = TrayMenu(items: items) { [weak self] id in

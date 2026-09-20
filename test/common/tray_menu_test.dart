@@ -2,12 +2,13 @@ import 'dart:io';
 
 import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/app_ports.dart';
+import 'package:fl_clash/common/compute.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/tray.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/action.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
@@ -16,6 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:riverpod/riverpod.dart';
+import 'package:riverpod/misc.dart' show ProviderListenable;
 import 'package:tray/tray.dart';
 
 const _channel = MethodChannel('tray');
@@ -331,6 +333,112 @@ void main() {
     expect(proxy['checked'], isTrue);
     expect(proxy['usesCustomView'], isTrue);
   });
+
+  test('large menus read delay state once for all proxy entries', () async {
+    final nodes = List.generate(
+      2000,
+      (i) => Proxy(name: 'node-$i', type: 'ss'),
+    );
+    final groups = List.generate(
+      5,
+      (i) => Group(name: 'group-$i', type: GroupType.Selector, all: nodes),
+    );
+    final reads = <Object, int>{};
+    T read<T>(ProviderListenable<T> provider) {
+      reads.update(provider, (count) => count + 1, ifAbsent: () => 1);
+      return container.read(provider);
+    }
+
+    await tray.update(
+      trayState: _trayState(groups: groups),
+      traffic: const Traffic(),
+      read: read,
+    );
+
+    expect(reads[delayDataSourceProvider], 1);
+    expect(reads[pendingDelayTestsProvider], 1);
+    expect(
+      reads.values.fold<int>(0, (sum, count) => sum + count),
+      lessThan(40),
+    );
+    final submenus = _items(
+      showCall(),
+    ).where((item) => item['type'] == 'submenu');
+    expect(submenus, hasLength(5));
+    for (final submenu in submenus) {
+      expect(submenu['items'], hasLength(2002));
+    }
+  });
+
+  test(
+    'delay snapshots preserve nested selections, URLs and pending tests',
+    () async {
+      const nested = Group(
+        name: 'nested',
+        type: GroupType.Selector,
+        now: 'other',
+        testUrl: 'https://nested.test',
+        all: [Proxy(name: 'chosen', type: 'ss')],
+      );
+      container.dispose();
+      container = ProviderContainer(
+        overrides: [
+          groupsProvider.overrideWithValue([nested]),
+          selectedMapProvider.overrideWithValue({'nested': 'chosen'}),
+          appSettingProvider.overrideWithValue(
+            const AppSettingProps(testUrl: 'https://default.test'),
+          ),
+          delayDataSourceProvider.overrideWithValue({
+            'https://nested.test': {'chosen': 42, 'other': 999},
+            'https://group.test': {'direct': 17, 'slow': -1, 'busy': 99},
+            'https://default.test': {'direct': 21},
+          }),
+          pendingDelayTestsProvider.overrideWithValue({
+            delayTestKey('https://group.test', 'busy'),
+          }),
+        ],
+      );
+
+      await update(
+        _trayState(
+          groups: [
+            const Group(
+              name: 'group',
+              type: GroupType.Selector,
+              testUrl: 'https://group.test',
+              all: [
+                Proxy(name: 'nested', type: 'Selector'),
+                Proxy(name: 'direct', type: 'ss'),
+                Proxy(name: 'slow', type: 'ss'),
+                Proxy(name: 'busy', type: 'ss'),
+                Proxy(name: 'unknown', type: 'ss'),
+              ],
+            ),
+            const Group(
+              name: 'fallback',
+              type: GroupType.Selector,
+              all: [Proxy(name: 'direct', type: 'ss')],
+            ),
+          ],
+        ),
+      );
+
+      final submenus = _items(
+        showCall(),
+      ).where((item) => item['type'] == 'submenu');
+      final entries = (submenus.first['items'] as List).cast<Map>();
+      final labels = {
+        for (final item in entries) item['label']: item['sublabel'],
+      };
+      expect(labels['nested'], '42 ms');
+      expect(labels['direct'], '17 ms');
+      expect(labels['slow'], currentAppLocalizations.timeout);
+      expect(labels['busy'], '...');
+      expect(labels['unknown'], isNull);
+      final fallback = (submenus.last['items'] as List).cast<Map>();
+      expect(fallback.last['sublabel'], '21 ms');
+    },
+  );
 
   group('a platform that is not macOS', () {
     late AppTray windows;

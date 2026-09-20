@@ -10,9 +10,11 @@ import 'package:tray/tray.dart';
 import 'app_localizations.dart';
 import 'l10n_labels.dart';
 import 'app_ports.dart';
+import 'compute.dart';
 import 'constant.dart';
 import 'keyboard.dart';
 import 'provider_reader.dart';
+import 'string.dart';
 import 'system.dart';
 import 'window.dart';
 
@@ -113,6 +115,41 @@ String _trayDelayTestKey(String groupName) {
 String _trayProxyDelayKey(String groupName, String proxyName) {
   return 'delay:${Uri.encodeComponent(groupName)}:'
       '${Uri.encodeComponent(proxyName)}';
+}
+
+class _TrayDelaySnapshot {
+  final List<Group> _groups;
+  final Map<String, String> _selectedMap;
+  final DelayMap _delays;
+  final Set<String> _pending;
+  final String _defaultTestUrl;
+  final Map<String, SelectedProxyState> _selections = {};
+
+  _TrayDelaySnapshot(ProviderReader read)
+    : _groups = read(groupsProvider),
+      _selectedMap = read(selectedMapProvider),
+      _delays = read(delayDataSourceProvider),
+      _pending = read(pendingDelayTestsProvider),
+      _defaultTestUrl = read(appSettingProvider).testUrl;
+
+  int? delayFor(String proxyName, String? testUrl) {
+    final selected = _selections.putIfAbsent(
+      proxyName,
+      () => computeRealSelectedProxyState(
+        proxyName,
+        groups: _groups,
+        selectedMap: _selectedMap,
+      ),
+    );
+    final effectiveUrl = selected.testUrl.takeFirstValid([
+      testUrl,
+      _defaultTestUrl,
+    ]);
+    if (_pending.contains(delayTestKey(effectiveUrl, selected.proxyName))) {
+      return 0;
+    }
+    return _delays[effectiveUrl]?[selected.proxyName];
+  }
 }
 
 class AppTray implements TrayPort {
@@ -319,11 +356,13 @@ class AppTray implements TrayPort {
     if (trayState.groups.isEmpty) {
       return const [];
     }
+    final delays = _TrayDelaySnapshot(read);
     return [
       for (final group in trayState.groups)
         _buildGroupMenuItem(
           group: group,
           selectedMap: trayState.selectedMap,
+          delays: delays,
           read: read,
         ),
       const TrayMenuSeparator(),
@@ -333,6 +372,7 @@ class AppTray implements TrayPort {
   TrayMenuSubmenu _buildGroupMenuItem({
     required Group group,
     required Map<String, String> selectedMap,
+    required _TrayDelaySnapshot delays,
     required ProviderReader read,
   }) {
     final selectedProxyName = group.getCurrentSelectedName(
@@ -358,6 +398,7 @@ class AppTray implements TrayPort {
             group: group,
             proxy: proxy,
             selectedProxyName: selectedProxyName,
+            delays: delays,
             read: read,
           ),
       ],
@@ -368,16 +409,11 @@ class AppTray implements TrayPort {
     required Group group,
     required Proxy proxy,
     required String? selectedProxyName,
+    required _TrayDelaySnapshot delays,
     required ProviderReader read,
   }) {
-    final pending = read(
-      delayTestPendingProvider(proxyName: proxy.name, testUrl: group.testUrl),
-    );
-    final delay = pending
-        ? 0
-        : read(delayProvider(proxyName: proxy.name, testUrl: group.testUrl));
     final presentation = getTrayDelayPresentation(
-      delay,
+      delays.delayFor(proxy.name, group.testUrl),
       loadingLabel: '...',
       timeoutLabel: currentAppLocalizations.timeout,
     );
@@ -424,17 +460,12 @@ class AppTray implements TrayPort {
     Set<String> proxyNames,
   ) async {
     final updates = <TrayMenuItemUpdate>[];
+    final delays = _TrayDelaySnapshot(read);
     for (final proxy in group.all.where(
       (proxy) => proxyNames.contains(proxy.name),
     )) {
-      final pending = read(
-        delayTestPendingProvider(proxyName: proxy.name, testUrl: group.testUrl),
-      );
-      final delay = pending
-          ? 0
-          : read(delayProvider(proxyName: proxy.name, testUrl: group.testUrl));
       final presentation = getTrayDelayPresentation(
-        delay,
+        delays.delayFor(proxy.name, group.testUrl),
         loadingLabel: '...',
         timeoutLabel: currentAppLocalizations.timeout,
       );

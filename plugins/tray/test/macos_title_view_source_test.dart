@@ -166,9 +166,9 @@ void main() {
     );
   });
 
-  test('macOS updates a compatible attached menu in place', () {
+  test('macOS reuses a compatible menu even while it is closed', () {
     expect(pluginSource, contains('item.statusItem.menu === \$0'));
-    expect(pluginSource, contains('attachedMenu.update(items: items)'));
+    expect(pluginSource, contains('if let menu, menu.update(items: items)'));
     expect(menuSource, contains('nativeItem.trayType == type'));
     expect(menuSource, contains('submenu.isCompatible(with: children)'));
   });
