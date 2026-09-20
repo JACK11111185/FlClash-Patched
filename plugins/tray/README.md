@@ -47,6 +47,13 @@ indicator scale it; Windows loads the path as-is, so point it at a multi-size `.
 Menu item ids are assigned by pre-order position, so an unchanged menu serializes identically across
 rebuilds and click dispatch stays stable while a menu is open.
 
+Native submenus are populated on first expansion on all three platforms. Unopened
+groups retain their serialized entries, and keyed updates modify those entries
+without creating native rows. Nested groups are deferred independently. Windows
+uses `WM_INITMENUPOPUP` for either popup owner; Linux handles the activation that
+libdbusmenu emits for `AboutToShow` and GTK selection for local menus. Exporting a
+Linux menu or running `show_all` does not populate its deferred groups.
+
 Proxy group submenus are available on all three desktop platforms. Windows displays
 item sublabels in the right-hand text column; Linux appends them in parentheses so
 AppIndicator hosts can display the selected proxy and delay results. Keyed updates
@@ -92,14 +99,27 @@ libraries and desktop hosts; programmatic menu opening is unsupported.
 
 ## Native menu tests
 
-The Windows tests check system checkmarks versus status icons, live delay and
-selection updates, and DPI/theme refreshes against native menu state. They use
-hidden owners and do not send desktop input; rendered appearance still requires
-manual verification. Run from the repository root after Flutter has prepared its
-Windows engine:
+The standalone CMake tests exercise deferred creation, updates before and after
+expansion, stable command IDs, reopening and cleanup against the native APIs.
+Windows also checks system checkmarks versus status icons, live delay and selection
+updates, DPI/theme refreshes, persistent-action keyboard filtering and nested
+session cleanup. These tests use hidden owners and do not send desktop input;
+they verify native state and message handling, not the menu's rendered appearance.
+On Windows, run from the repository root after Flutter has prepared its engine:
 
 ```sh
 cmake -S plugins/tray/test/native -B .dart_tool/tray_menu_tests -A x64
 cmake --build .dart_tool/tray_menu_tests --config Debug
 ctest --test-dir .dart_tool/tray_menu_tests -C Debug --output-on-failure
+```
+
+On Linux, install the development packages for GTK 3, Ayatana AppIndicator and
+libdbusmenu GTK 3, plus Xvfb and xauth. Point `FLUTTER_LINUX_DIR` at the Flutter
+engine directory containing `libflutter_linux_gtk.so` and `flutter_linux/`:
+
+```sh
+cmake -S plugins/tray/test/native -B .dart_tool/tray_menu_tests \
+  -DFLUTTER_LINUX_DIR="$FLUTTER_ROOT/bin/cache/artifacts/engine/linux-x64"
+cmake --build .dart_tool/tray_menu_tests
+ctest --test-dir .dart_tool/tray_menu_tests --output-on-failure
 ```

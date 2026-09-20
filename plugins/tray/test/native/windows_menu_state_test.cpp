@@ -46,11 +46,8 @@ class Fixture {
       : plugin(nullptr, std::make_unique<flutter::MethodChannel<Value>>(
                             &messenger, "tray",
                             &flutter::StandardMethodCodec::GetInstance())) {
-    plugin.menu_icons_.SetAppearance(96, false);
-    plugin.menu_ = ::CreatePopupMenu();
-    Check(plugin.menu_ != nullptr, "cannot create native menu");
-    plugin.RebuildMenu(plugin.menu_, {Value(Node("selected", 101, true)),
-                                      Value(Node("other", 102, false))});
+    plugin.SetMenu(
+        {Value(Node("selected", 101, true)), Value(Node("other", 102, false))});
   }
 
   void Update(const char* key, Map fields) {

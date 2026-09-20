@@ -10,18 +10,21 @@ thread_local TrayMenuSession* TrayMenuSession::current_ = nullptr;
 
 TrayMenuSession::TrayMenuSession(
     HWND owner, const std::unordered_set<UINT>& persistent_items,
-    std::function<void(int)> on_selected)
+    std::function<void(int)> on_selected,
+    std::function<void(HMENU)> on_open)
     : owner_(owner),
       persistent_items_(persistent_items),
-      on_selected_(std::move(on_selected)) {
-  if (!::SetWindowSubclass(owner_, OwnerProc, reinterpret_cast<UINT_PTR>(this),
-                           reinterpret_cast<DWORD_PTR>(this))) {
+      on_selected_(std::move(on_selected)),
+      on_open_(std::move(on_open)) {
+  subclassed_ = ::SetWindowSubclass(owner_, OwnerProc,
+                                    reinterpret_cast<UINT_PTR>(this),
+                                    reinterpret_cast<DWORD_PTR>(this)) != FALSE;
+  if (!subclassed_) {
     return;
   }
   hook_ = ::SetWindowsHookExW(WH_MSGFILTER, FilterProc, nullptr,
                               ::GetCurrentThreadId());
   if (hook_ == nullptr) {
-    ::RemoveWindowSubclass(owner_, OwnerProc, reinterpret_cast<UINT_PTR>(this));
     return;
   }
   previous_ = current_;
@@ -32,6 +35,8 @@ TrayMenuSession::~TrayMenuSession() {
   if (hook_ != nullptr) {
     ::UnhookWindowsHookEx(hook_);
     current_ = previous_;
+  }
+  if (subclassed_) {
     ::RemoveWindowSubclass(owner_, OwnerProc, reinterpret_cast<UINT_PTR>(this));
   }
 }
@@ -40,7 +45,9 @@ LRESULT CALLBACK TrayMenuSession::OwnerProc(HWND window, UINT message,
                                             WPARAM wparam, LPARAM lparam,
                                             UINT_PTR id, DWORD_PTR data) {
   auto* session = reinterpret_cast<TrayMenuSession*>(data);
-  if (message == WM_MENUSELECT) {
+  if (message == WM_INITMENUPOPUP && HIWORD(lparam) == 0) {
+    session->on_open_(reinterpret_cast<HMENU>(wparam));
+  } else if (message == WM_MENUSELECT) {
     const UINT flags = HIWORD(wparam);
     session->selected_menu_ = (flags == 0xffff || (flags & MF_POPUP) != 0)
                                   ? nullptr
@@ -48,6 +55,7 @@ LRESULT CALLBACK TrayMenuSession::OwnerProc(HWND window, UINT message,
     session->selected_id_ = LOWORD(wparam);
   } else if (message == WM_NCDESTROY) {
     session->selected_menu_ = nullptr;
+    session->subclassed_ = false;
     ::RemoveWindowSubclass(window, OwnerProc, id);
   }
   return ::DefSubclassProc(window, message, wparam, lparam);

@@ -55,6 +55,9 @@ class TrayPlugin : public flutter::Plugin {
   bool ApplyMenuItemUpdate(const flutter::EncodableMap& arguments);
   bool ApplyIcon(bool add);
   void RebuildMenu(HMENU menu, const flutter::EncodableList& items);
+  void SetMenu(const flutter::EncodableList& items);
+  void MaterializeMenu(HMENU menu);
+  void IndexMenuItems(flutter::EncodableList& items);
   void SendEvent(const char* name, const flutter::EncodableValue& arguments);
   void SendMenuSelection(int command);
   void RefreshMenuIcons();
@@ -69,6 +72,9 @@ class TrayPlugin : public flutter::Plugin {
 
   NOTIFYICONDATAW icon_data_{};
   HMENU menu_ = nullptr;
+  flutter::EncodableList menu_model_;
+  std::unordered_map<std::string, flutter::EncodableMap*> menu_entries_;
+  std::unordered_map<HMENU, const flutter::EncodableList*> deferred_menus_;
   std::unordered_map<std::string, MenuItemLocation> menu_items_;
   std::unordered_set<UINT> persistent_menu_items_;
   TrayMenuIcons menu_icons_;

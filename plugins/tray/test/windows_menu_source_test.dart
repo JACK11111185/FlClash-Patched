@@ -48,47 +48,8 @@ void main() {
     );
     expect(
       pluginSource.indexOf('visible_ = true;'),
-      lessThan(pluginSource.indexOf('menu_items_.clear();\n    RebuildMenu')),
+      lessThan(pluginSource.indexOf('SetMenu(*items)')),
       reason: 'the visible menu may only change after native icon acceptance',
-    );
-  });
-
-  test('windows recursively indexes keyed items without changing ids', () {
-    expect(pluginSource, contains('MenuItemLocation{menu, position'));
-    expect(pluginSource, contains('menu_items_.clear();\n    RebuildMenu'));
-    expect(pluginSource, contains('SetMenuItemInfoW'));
-    expect(pluginSource, contains('location->second.checkbox'));
-    expect(
-      pluginSource.indexOf('RebuildMenu(submenu, *children)'),
-      lessThan(pluginSource.indexOf('menu_items_.try_emplace(')),
-      reason: 'nested keys must be indexed by the same recursive rebuild',
-    );
-    expect(
-      pluginSource,
-      contains('static_cast<UINT_PTR>(IntAt(*entry, "id", 0))'),
-    );
-    expect(
-      pluginSource,
-      contains('flutter::EncodableValue(command)'),
-      reason: 'the selected command must round-trip as the original Dart id',
-    );
-    expect(
-      pluginSource,
-      isNot(contains('kMenuCommandIdOffset')),
-      reason: 'updates must preserve the existing Dart command ids',
-    );
-  });
-
-  test('windows reports an unknown menu key without mutating the menu', () {
-    expect(
-      pluginSource,
-      contains('''
-  const auto location = menu_items_.find(*key);
-  if (location == menu_items_.end()) {
-    return false;
-  }
-
-  const std::string* label'''),
     );
   });
 
@@ -97,7 +58,7 @@ void main() {
     expect(pluginSource, contains('method == "updateMenuItems"'));
     expect(pluginSource, contains('ListAt(*arguments, "updates")'));
     expect(
-      pluginSource.indexOf('menu_items_.find(*key) == menu_items_.end()'),
+      pluginSource.indexOf('menu_entries_.find(*key) == menu_entries_.end()'),
       lessThan(pluginSource.indexOf('if (!ApplyMenuItemUpdate(update))')),
     );
     expect(pluginSource, isNot(contains('method == "updateMenuItem"')));

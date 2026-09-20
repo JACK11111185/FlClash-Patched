@@ -121,6 +121,20 @@ std::wstring MenuText(const std::string& label, const std::string& sublabel) {
   return Utf16FromUtf8(text);
 }
 
+void UpdateMenuEntry(flutter::EncodableMap& entry,
+                     const flutter::EncodableMap& update) {
+  for (const char* key : {"label", "sublabel", "sublabelStyle"}) {
+    if (const auto* value = StringAt(update, key)) {
+      entry[flutter::EncodableValue(key)] = flutter::EncodableValue(*value);
+    }
+  }
+  for (const char* key : {"enabled", "checked"}) {
+    if (const auto* value = BoolPointerAt(update, key)) {
+      entry[flutter::EncodableValue(key)] = flutter::EncodableValue(*value);
+    }
+  }
+}
+
 }  // namespace
 
 // static
@@ -180,6 +194,34 @@ bool TrayPlugin::ApplyIcon(bool add) {
   return ::Shell_NotifyIconW(add ? NIM_ADD : NIM_MODIFY, &icon_data_) != FALSE;
 }
 
+void TrayPlugin::IndexMenuItems(flutter::EncodableList& items) {
+  for (auto& value : items) {
+    auto* entry = std::get_if<flutter::EncodableMap>(&value);
+    if (entry == nullptr) {
+      continue;
+    }
+    if (const auto* key = StringAt(*entry, "key")) {
+      menu_entries_.try_emplace(*key, entry);
+    }
+    const auto children = entry->find(flutter::EncodableValue("items"));
+    if (children != entry->end()) {
+      if (auto* list = std::get_if<flutter::EncodableList>(&children->second)) {
+        IndexMenuItems(*list);
+      }
+    }
+  }
+}
+
+void TrayPlugin::MaterializeMenu(HMENU menu) {
+  const auto deferred = deferred_menus_.find(menu);
+  if (deferred == deferred_menus_.end()) {
+    return;
+  }
+  const auto* items = deferred->second;
+  deferred_menus_.erase(deferred);
+  RebuildMenu(menu, *items);
+}
+
 void TrayPlugin::RebuildMenu(HMENU menu, const flutter::EncodableList& items) {
   while (::GetMenuItemCount(menu) > 0) {
     ::DeleteMenu(menu, 0, MF_BYPOSITION);
@@ -221,7 +263,7 @@ void TrayPlugin::RebuildMenu(HMENU menu, const flutter::EncodableList& items) {
       HMENU submenu = ::CreatePopupMenu();
       const flutter::EncodableList* children = ListAt(*entry, "items");
       if (children != nullptr) {
-        RebuildMenu(submenu, *children);
+        deferred_menus_.emplace(submenu, children);
       }
       flags |= MF_POPUP;
       item_id = reinterpret_cast<UINT_PTR>(submenu);
@@ -298,16 +340,24 @@ bool TrayPlugin::Show(const flutter::EncodableMap& arguments) {
 
   const flutter::EncodableList* items = ListAt(arguments, "menu");
   if (items != nullptr) {
-    menu_icons_.SetAppearance(menu_dpi_, menu_is_dark_);
-    if (menu_ == nullptr) {
-      menu_ = ::CreatePopupMenu();
-    }
-    persistent_menu_items_.clear();
-    menu_items_.clear();
-    RebuildMenu(menu_, *items);
+    SetMenu(*items);
   }
 
   return true;
+}
+
+void TrayPlugin::SetMenu(const flutter::EncodableList& items) {
+  menu_icons_.SetAppearance(menu_dpi_, menu_is_dark_);
+  if (menu_ == nullptr) {
+    menu_ = ::CreatePopupMenu();
+  }
+  persistent_menu_items_.clear();
+  deferred_menus_.clear();
+  menu_entries_.clear();
+  menu_model_ = items;
+  IndexMenuItems(menu_model_);
+  menu_items_.clear();
+  RebuildMenu(menu_, menu_model_);
 }
 
 void TrayPlugin::Hide() {
@@ -324,6 +374,9 @@ void TrayPlugin::Hide() {
     menu_ = nullptr;
   }
   menu_items_.clear();
+  deferred_menus_.clear();
+  menu_entries_.clear();
+  menu_model_.clear();
   persistent_menu_items_.clear();
   menu_icons_.Clear();
 
@@ -361,7 +414,8 @@ bool TrayPlugin::OpenMenu(bool bring_app_to_front) {
   ApplyMenuBrightness(window, menu_is_dark_);
   ::SetForegroundWindow(window);
   TrayMenuSession session(window, persistent_menu_items_,
-                           [this](int command) { SendMenuSelection(command); });
+                           [this](int command) { SendMenuSelection(command); },
+                           [this](HMENU menu) { MaterializeMenu(menu); });
   const int command = ::TrackPopupMenu(
       menu_, TPM_BOTTOMALIGN | TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON,
       cursor.x, cursor.y, 0, window, nullptr);
@@ -392,9 +446,14 @@ bool TrayPlugin::ApplyMenuItemUpdate(
   if (key == nullptr) {
     return false;
   }
+  const auto entry = menu_entries_.find(*key);
+  if (entry == menu_entries_.end()) {
+    return false;
+  }
   const auto location = menu_items_.find(*key);
   if (location == menu_items_.end()) {
-    return false;
+    UpdateMenuEntry(*entry->second, arguments);
+    return true;
   }
 
   const std::string* label = StringAt(arguments, "label");
@@ -474,6 +533,7 @@ bool TrayPlugin::ApplyMenuItemUpdate(
     TrayMenuSession::InvalidateItem(location->second.menu,
                                     location->second.position);
   }
+  UpdateMenuEntry(*entry->second, arguments);
   return true;
 }
 
@@ -485,7 +545,7 @@ bool TrayPlugin::UpdateMenuItems(
       return false;
     }
     const std::string* key = StringAt(*update, "key");
-    if (key == nullptr || menu_items_.find(*key) == menu_items_.end()) {
+    if (key == nullptr || menu_entries_.find(*key) == menu_entries_.end()) {
       return false;
     }
   }
