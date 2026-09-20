@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:tray/tray.dart';
@@ -315,6 +316,8 @@ class AppTray implements TrayPort {
           },
         ),
       const TrayMenuSeparator(),
+      _buildProfileMenu(read),
+      const TrayMenuSeparator(),
       ..._buildGroupMenu(trayState: trayState, read: read),
       TrayMenuCheckbox(
         label: appLocalizations.tun,
@@ -352,6 +355,49 @@ class AppTray implements TrayPort {
         },
       ),
     ];
+  }
+
+  TrayMenuSubmenu _buildProfileMenu(ProviderReader read) {
+    final profiles = read(profilesProvider);
+    final currentProfile = read(currentProfileProvider);
+    return TrayMenuSubmenu(
+      label: currentAppLocalizations.profile,
+      sublabel: currentProfile?.realLabel,
+      usesCustomView: isMacOS,
+      items: [
+        for (final profile in profiles)
+          TrayMenuCheckbox(
+            label: profile.realLabel,
+            checked: profile.id == currentProfile?.id,
+            onSelected: () {
+              if (read(profilesProvider).any((item) => item.id == profile.id)) {
+                read(currentProfileIdProvider.notifier).value = profile.id;
+              }
+            },
+          ),
+        if (profiles.isNotEmpty) const TrayMenuSeparator(),
+        TrayMenuAction(
+          label: currentAppLocalizations.sync,
+          enabled:
+              currentProfile != null &&
+              currentProfile.type != ProfileType.file &&
+              !read(isUpdatingProvider(currentProfile.updatingKey)),
+          onSelected: () async {
+            final profile = read(currentProfileProvider);
+            if (profile == null ||
+                profile.type == ProfileType.file ||
+                read(isUpdatingProvider(profile.updatingKey))) {
+              return;
+            }
+            await globalState.safeRun(() async {
+              await read(
+                profilesActionProvider.notifier,
+              ).updateProfile(profile, showLoading: true);
+            });
+          },
+        ),
+      ],
+    );
   }
 
   List<TrayMenuItem> _buildGroupMenu({

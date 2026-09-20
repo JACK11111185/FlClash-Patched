@@ -21,6 +21,8 @@ import 'package:riverpod/riverpod.dart';
 import 'package:riverpod/misc.dart' show ProviderListenable;
 import 'package:tray/tray.dart';
 
+import '../helpers/test_profiles.dart';
+
 const _channel = MethodChannel('tray');
 
 class _TrayProxiesAction extends ProxiesAction {
@@ -167,6 +169,62 @@ void main() {
       read: container.read,
     );
   }
+
+  test(
+    'profile submenu switches profiles and disables unavailable updates',
+    () async {
+      const remote = Profile(
+        id: 1,
+        label: 'Remote',
+        url: 'https://example.com/profile.yaml',
+        autoUpdateDuration: Duration(days: 1),
+      );
+      final local = remote.copyWith(id: 2, label: 'Local', url: '');
+      container.dispose();
+      container = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(() => TestProfiles([remote, local])),
+        ],
+      );
+      container.listen(currentProfileIdProvider, (_, _) {});
+      container.read(currentProfileIdProvider.notifier).value = remote.id;
+
+      List<Map> profileItems() =>
+          (_items(showCall()).singleWhere(
+                    (item) => item['label'] == currentAppLocalizations.profile,
+                  )['items']
+                  as List)
+              .cast<Map>();
+
+      await update(_trayState());
+      expect(profileItems().first['checked'], isTrue);
+      expect(profileItems().last['enabled'], isTrue);
+      final operation = container
+          .read(updatingKeysProvider.notifier)
+          .start(remote.updatingKey);
+      await update(_trayState());
+      expect(profileItems().last['enabled'], isFalse);
+      container
+          .read(updatingKeysProvider.notifier)
+          .stop(remote.updatingKey, operation);
+
+      await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .handlePlatformMessage(
+            _channel.name,
+            const StandardMethodCodec().encodeMethodCall(
+              MethodCall('onMenuItemSelected', {'id': profileItems()[1]['id']}),
+            ),
+            (_) {},
+          );
+      expect(container.read(currentProfileIdProvider), local.id);
+      await update(_trayState());
+      expect(profileItems()[1]['checked'], isTrue);
+      expect(profileItems().last['enabled'], isFalse);
+      container.read(currentProfileIdProvider.notifier).value = null;
+      await update(_trayState());
+      expect(profileItems().last['enabled'], isFalse);
+    },
+  );
 
   for (final minimized in [false, true]) {
     testWidgets(
@@ -350,9 +408,11 @@ void main() {
       ),
     );
 
-    final submenu = _items(
-      showCall(),
-    ).firstWhere((item) => item['type'] == 'submenu');
+    final submenu = _items(showCall()).firstWhere(
+      (item) =>
+          item['type'] == 'submenu' &&
+          item['label'] != currentAppLocalizations.profile,
+    );
     expect(submenu['label'], 'Proxy');
     expect(submenu['sublabel'], 'A');
     expect(submenu['usesCustomView'], isTrue);
@@ -394,9 +454,11 @@ void main() {
       reads.values.fold<int>(0, (sum, count) => sum + count),
       lessThan(40),
     );
-    final submenus = _items(
-      showCall(),
-    ).where((item) => item['type'] == 'submenu');
+    final submenus = _items(showCall()).where(
+      (item) =>
+          item['type'] == 'submenu' &&
+          item['label'] != currentAppLocalizations.profile,
+    );
     expect(submenus, hasLength(5));
     for (final submenu in submenus) {
       expect(submenu['items'], hasLength(2002));
@@ -456,9 +518,11 @@ void main() {
         ),
       );
 
-      final submenus = _items(
-        showCall(),
-      ).where((item) => item['type'] == 'submenu');
+      final submenus = _items(showCall()).where(
+        (item) =>
+            item['type'] == 'submenu' &&
+            item['label'] != currentAppLocalizations.profile,
+      );
       final entries = (submenus.first['items'] as List).cast<Map>();
       final labels = {
         for (final item in entries) item['label']: item['sublabel'],
@@ -494,8 +558,11 @@ void main() {
         );
       });
 
-      Map<Object?, Object?> proxySubmenu() =>
-          _items(showCall()).singleWhere((item) => item['type'] == 'submenu');
+      Map<Object?, Object?> proxySubmenu() => _items(showCall()).singleWhere(
+        (item) =>
+            item['type'] == 'submenu' &&
+            item['label'] != currentAppLocalizations.profile,
+      );
 
       Future<void> select(Map<Object?, Object?> item) async {
         await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -605,7 +672,11 @@ void main() {
         await update(_trayState());
 
         expect(
-          _items(showCall()).where((item) => item['type'] == 'submenu'),
+          _items(showCall()).where(
+            (item) =>
+                item['type'] == 'submenu' &&
+                item['label'] != currentAppLocalizations.profile,
+          ),
           isEmpty,
         );
       });

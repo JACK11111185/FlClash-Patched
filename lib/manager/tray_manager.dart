@@ -8,6 +8,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,6 +39,15 @@ class _TrayManagerState extends ConsumerState<TrayManager> {
   void initState() {
     super.initState();
     _subscription = Tray.instance.events.listen(_handleTrayEvent);
+    ref.listenManual(profilesProvider, (prev, next) {
+      _reportFailure(ref.read(systemActionProvider.notifier).updateTray());
+    });
+    ref.listenManual(currentProfileIdProvider, (prev, next) {
+      _reportFailure(ref.read(systemActionProvider.notifier).updateTray());
+    });
+    ref.listenManual(updatingKeysProvider, (prev, next) {
+      _reportFailure(ref.read(systemActionProvider.notifier).updateTray());
+    });
     ref.listenManual(trayStateProvider, (prev, next) {
       if (prev != next) {
         _reportFailure(ref.read(systemActionProvider.notifier).updateTray());
