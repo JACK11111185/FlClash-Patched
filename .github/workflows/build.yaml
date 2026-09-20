@@ -49,16 +49,6 @@ jobs:
       - name: Analyze
         run: flutter analyze --no-fatal-infos
 
-      - name: Skip native build hooks
-        run: |
-          yq -i '.hooks.user_defines.setup.build_assets = false | .hooks.user_defines.rust_api.build_assets = false' pubspec.yaml
-
-      - name: Run tests with coverage
-        run: flutter test --reporter expanded --coverage
-
-      - name: Check coverage
-        run: dart tool/check_coverage.dart coverage/lcov.info 75
-
   dart-tests:
     name: Dart tests (${{ matrix.shard }})
     runs-on: ubuntu-latest
