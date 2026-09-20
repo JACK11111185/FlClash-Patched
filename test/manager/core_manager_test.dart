@@ -292,17 +292,20 @@ void main() {
     final coreInterface = _coreInterface();
     await _pumpCoreManager(tester, coreInterface);
 
-    coreEventManager.sendEvent(
-      const CoreEvent(
-        type: CoreEventType.log,
-        data: {'LogLevel': 'error', 'Payload': 'core failure'},
-      ),
-    );
-    await tester.pump();
+    try {
+      coreEventManager.sendEvent(
+        const CoreEvent(
+          type: CoreEventType.log,
+          data: {'LogLevel': 'error', 'Payload': 'core failure'},
+        ),
+      );
+      await tester.pump();
 
-    expect(find.text('core failure'), findsOneWidget);
-
-    await tester.pumpWidget(const SizedBox.shrink());
+      expect(find.text('core failure'), findsOneWidget);
+    } finally {
+      throttler.cancel(FunctionTag.coreErrorNotifier);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
   });
 
   group('profile switch failure', () {

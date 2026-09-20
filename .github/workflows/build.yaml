@@ -18,8 +18,8 @@ env:
   NDK_VERSION: r29
 
 jobs:
-  dart:
-    name: Dart
+  dart-checks:
+    name: Dart checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -49,15 +49,87 @@ jobs:
       - name: Analyze
         run: flutter analyze --no-fatal-infos
 
+  dart-tests:
+    name: Dart tests (${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
       - name: Skip native build hooks
         run: |
           yq -i '.hooks.user_defines.setup.build_assets = false | .hooks.user_defines.rust_api.build_assets = false' pubspec.yaml
 
       - name: Run tests
-        run: flutter test --reporter expanded --coverage
+        run: >-
+          flutter test --reporter expanded --coverage
+          --total-shards=${{ strategy.job-total }}
+          --shard-index=${{ matrix.shard }}
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v7
+        with:
+          name: dart-coverage-${{ matrix.shard }}
+          path: coverage/lcov.info
+          if-no-files-found: error
+          retention-days: 1
+
+  dart:
+    name: Dart
+    needs: [ dart-checks, dart-tests ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Download coverage
+        uses: actions/download-artifact@v8
+        with:
+          path: coverage/shards
+          pattern: dart-coverage-*
+
+      - name: Install LCOV
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes lcov
+
+      - name: Merge coverage
+        shell: bash
+        run: |
+          shopt -s nullglob
+          reports=(coverage/shards/dart-coverage-*/lcov.info)
+          test "${#reports[@]}" -eq 4
+          args=()
+          for report in "${reports[@]}"; do
+            args+=(--add-tracefile "$report")
+          done
+          lcov "${args[@]}" --output-file coverage/lcov.info
 
       - name: Check coverage
-        run: dart run tool/check_coverage.dart coverage/lcov.info 75
+        run: dart tool/check_coverage.dart coverage/lcov.info 75
 
   plugins:
     name: Plugins
