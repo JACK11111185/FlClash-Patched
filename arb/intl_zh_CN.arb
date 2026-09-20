@@ -633,6 +633,8 @@
   "generateSecret": "生成",
   "networkSpeedNotification": "显示实时网速",
   "networkSpeedNotificationDesc": "在系统状态区域显示实时网速，可能会稍微增加耗电",
+  "showTrayProxySelection": "托盘中选择代理",
+  "showTrayProxySelectionDesc": "在托盘菜单中显示代理组和节点，方便快速切换",
   "suspendSupport": "休眠支持",
   "suspendSupportDesc": "设备空闲时挂起核心以降低耗电",
   "uploadTraffic": "上传流量",

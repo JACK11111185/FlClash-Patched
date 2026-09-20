@@ -55,6 +55,9 @@ TrayState trayState(Ref ref) {
   final showNetworkSpeed = ref.watch(
     vpnSettingProvider.select((state) => state.networkSpeedNotification),
   );
+  final showTrayProxySelection = ref.watch(
+    appSettingProvider.select((state) => state.showTrayProxySelection),
+  );
   final monochromeTrayIcon = ref.watch(
     themeSettingProvider.select((state) => state.monochromeTrayIcon),
   );
@@ -76,7 +79,7 @@ TrayState trayState(Ref ref) {
     systemProxy: systemProxy,
     tunEnable: clashConfig.tunEnable,
     isStart: isStart,
-    groups: groups,
+    groups: showTrayProxySelection ? groups : const [],
     selectedMap: selectedMap,
     showNetworkSpeed: showNetworkSpeed,
     monochromeTrayIcon: monochromeTrayIcon,

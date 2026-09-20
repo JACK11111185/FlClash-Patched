@@ -971,6 +971,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "在常驻通知上显示停止按钮。若系统因此总是展开通知，可关闭",
     ),
     "showPassword": MessageLookupByLibrary.simpleMessage("显示密码"),
+    "showTrayProxySelection": MessageLookupByLibrary.simpleMessage("托盘中选择代理"),
+    "showTrayProxySelectionDesc": MessageLookupByLibrary.simpleMessage(
+      "在托盘菜单中显示代理组和节点，方便快速切换",
+    ),
     "showUnavailable": MessageLookupByLibrary.simpleMessage("显示超时"),
     "shrink": MessageLookupByLibrary.simpleMessage("紧凑"),
     "signIn": MessageLookupByLibrary.simpleMessage("登录"),

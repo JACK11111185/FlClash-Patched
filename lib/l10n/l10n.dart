@@ -5235,6 +5235,26 @@ class AppLocalizations {
     );
   }
 
+  /// `Show proxy selection in tray`
+  String get showTrayProxySelection {
+    return Intl.message(
+      'Show proxy selection in tray',
+      name: 'showTrayProxySelection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show proxy groups and nodes in the tray menu for quick switching`
+  String get showTrayProxySelectionDesc {
+    return Intl.message(
+      'Show proxy groups and nodes in the tray menu for quick switching',
+      name: 'showTrayProxySelectionDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Suspend support`
   String get suspendSupport {
     return Intl.message(

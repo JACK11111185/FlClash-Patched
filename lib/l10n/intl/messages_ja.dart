@@ -1117,6 +1117,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "常駐通知に停止ボタンを表示します。これが原因で通知が常に展開される場合はオフにしてください",
     ),
     "showPassword": MessageLookupByLibrary.simpleMessage("パスワードを表示"),
+    "showTrayProxySelection": MessageLookupByLibrary.simpleMessage(
+      "トレイにプロキシ選択を表示",
+    ),
+    "showTrayProxySelectionDesc": MessageLookupByLibrary.simpleMessage(
+      "トレイメニューにプロキシグループとノードを表示し、すばやく切り替えられるようにします",
+    ),
     "showUnavailable": MessageLookupByLibrary.simpleMessage("タイムアウト表示"),
     "shrink": MessageLookupByLibrary.simpleMessage("コンパクト"),
     "signIn": MessageLookupByLibrary.simpleMessage("サインイン"),

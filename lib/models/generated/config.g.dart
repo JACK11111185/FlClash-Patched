@@ -15,6 +15,7 @@ _AppSettingProps _$AppSettingPropsFromJson(Map<String, dynamic> json) =>
       onlyStatisticsProxy: json['onlyStatisticsProxy'] as bool? ?? false,
       showNotificationStopAction:
           json['showNotificationStopAction'] as bool? ?? true,
+      showTrayProxySelection: json['showTrayProxySelection'] as bool? ?? true,
       autoLaunch: json['autoLaunch'] as bool? ?? false,
       highPriorityAutoLaunch: json['highPriorityAutoLaunch'] as bool? ?? false,
       silentLaunch: json['silentLaunch'] as bool? ?? false,
@@ -60,6 +61,7 @@ Map<String, dynamic> _$AppSettingPropsToJson(_AppSettingProps instance) =>
           .toList(),
       'onlyStatisticsProxy': instance.onlyStatisticsProxy,
       'showNotificationStopAction': instance.showNotificationStopAction,
+      'showTrayProxySelection': instance.showTrayProxySelection,
       'autoLaunch': instance.autoLaunch,
       'highPriorityAutoLaunch': instance.highPriorityAutoLaunch,
       'silentLaunch': instance.silentLaunch,

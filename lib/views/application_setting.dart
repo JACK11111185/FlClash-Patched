@@ -146,6 +146,14 @@ class ApplicationSettingView extends ConsumerWidget {
                 (state) => state.copyWith(networkSpeedNotification: value),
               ),
         ),
+      if (system.isDesktop)
+        _appSettingToggle(
+          title: (l) => l.showTrayProxySelection,
+          subtitle: (l) => l.showTrayProxySelectionDesc,
+          select: (state) => state.showTrayProxySelection,
+          update: (state, value) =>
+              state.copyWith(showTrayProxySelection: value),
+        ),
       _appSettingToggle(
         title: (l) => l.autoCheckUpdate,
         subtitle: (l) => l.autoCheckUpdateDesc,

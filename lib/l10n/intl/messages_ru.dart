@@ -1394,6 +1394,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Показывать кнопку остановки в постоянном уведомлении. Отключите, если из-за неё система всегда разворачивает уведомление",
     ),
     "showPassword": MessageLookupByLibrary.simpleMessage("Показать пароль"),
+    "showTrayProxySelection": MessageLookupByLibrary.simpleMessage(
+      "Показывать выбор прокси в трее",
+    ),
+    "showTrayProxySelectionDesc": MessageLookupByLibrary.simpleMessage(
+      "Показывать группы и узлы прокси в меню трея для быстрого переключения",
+    ),
     "showUnavailable": MessageLookupByLibrary.simpleMessage("Показать таймаут"),
     "shrink": MessageLookupByLibrary.simpleMessage("Компактный"),
     "signIn": MessageLookupByLibrary.simpleMessage("Войти"),

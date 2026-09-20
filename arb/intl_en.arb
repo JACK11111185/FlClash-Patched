@@ -633,6 +633,8 @@
   "generateSecret": "Generate",
   "networkSpeedNotification": "Show real-time network speed",
   "networkSpeedNotificationDesc": "Show real-time network speed in the system status area; may slightly increase power usage",
+  "showTrayProxySelection": "Show proxy selection in tray",
+  "showTrayProxySelectionDesc": "Show proxy groups and nodes in the tray menu for quick switching",
   "suspendSupport": "Suspend support",
   "suspendSupportDesc": "Suspend the core while the device is idle to reduce battery usage",
   "uploadTraffic": "Upload traffic",

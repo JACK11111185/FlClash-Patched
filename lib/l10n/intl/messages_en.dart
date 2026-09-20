@@ -1329,6 +1329,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Show a stop button on the persistent notification. Turn it off if your system keeps the notification expanded because of it",
     ),
     "showPassword": MessageLookupByLibrary.simpleMessage("Show password"),
+    "showTrayProxySelection": MessageLookupByLibrary.simpleMessage(
+      "Show proxy selection in tray",
+    ),
+    "showTrayProxySelectionDesc": MessageLookupByLibrary.simpleMessage(
+      "Show proxy groups and nodes in the tray menu for quick switching",
+    ),
     "showUnavailable": MessageLookupByLibrary.simpleMessage("Show timeout"),
     "shrink": MessageLookupByLibrary.simpleMessage("Compact"),
     "signIn": MessageLookupByLibrary.simpleMessage("Sign in"),
