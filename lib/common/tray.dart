@@ -430,6 +430,7 @@ class AppTray implements TrayPort {
       selectedMap[group.name] ?? '',
     );
     return TrayMenuSubmenu(
+      key: 'group:${Uri.encodeComponent(group.name)}',
       label: group.name,
       sublabel: getTrayGroupSelectionLabel(group, selectedMap),
       usesCustomView: isMacOS,

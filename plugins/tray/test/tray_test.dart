@@ -118,6 +118,98 @@ void main() {
     );
   });
 
+  for (final platform in [
+    TargetPlatform.windows,
+    TargetPlatform.macOS,
+    TargetPlatform.linux,
+  ]) {
+    test(
+      'large $platform menus patch selection and refresh callbacks',
+      () async {
+        debugDefaultTargetPlatformOverride = platform;
+        var selected = -1;
+        TraySpec menu(int selection) => _spec(
+          menu: [
+            TrayMenuSubmenu(
+              key: 'group',
+              label: 'Group',
+              sublabel: 'node-$selection',
+              items: List.generate(
+                2000,
+                (i) => TrayMenuCheckbox(
+                  key: 'node-$i',
+                  label: 'node-$i',
+                  checked: i == selection,
+                  onSelected: () => selected = selection,
+                ),
+              ),
+            ),
+          ],
+        );
+        await Tray.instance.show(menu(0));
+        await Tray.instance.show(menu(1999));
+        expect(calls.map((call) => call.method), ['show', 'updateMenuItems']);
+        expect((calls.last.arguments as Map)['updates'], [
+          {'key': 'node-0', 'checked': false},
+          {'key': 'node-1999', 'checked': true},
+          {'key': 'group', 'sublabel': 'node-1999'},
+        ]);
+        await _emit('onMenuItemSelected', {'id': 1025});
+        expect(selected, 1999);
+        await Tray.instance.show(menu(1999));
+        expect(calls, hasLength(2));
+        await Tray.instance.show(_spec());
+        expect(showCount(), 2);
+      },
+    );
+
+    test('$platform rejected menu patches fall back to a full show', () async {
+      debugDefaultTargetPlatformOverride = platform;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(_channel, (call) async {
+            calls.add(call);
+            return call.method != 'updateMenuItems';
+          });
+      await Tray.instance.show(
+        _spec(
+          menu: const [
+            TrayMenuCheckbox(key: 'node', label: 'Node', checked: false),
+          ],
+        ),
+      );
+      await Tray.instance.show(
+        _spec(
+          menu: const [
+            TrayMenuCheckbox(key: 'node', label: 'Node', checked: true),
+          ],
+        ),
+      );
+      expect(calls.map((call) => call.method), [
+        'show',
+        'updateMenuItems',
+        'show',
+      ]);
+    });
+
+    test(
+      '$platform external delay updates invalidate the menu diff snapshot',
+      () async {
+        debugDefaultTargetPlatformOverride = platform;
+        final spec = _spec(
+          menu: const [
+            TrayMenuCheckbox(key: 'node', label: 'Node', checked: false),
+          ],
+        );
+        await Tray.instance.show(spec);
+        await Tray.instance.updateMenuItems(const [
+          TrayMenuItemUpdate(key: 'node', sublabel: '42 ms'),
+        ]);
+        await Tray.instance.show(spec);
+        expect(showCount(), 2);
+      },
+    );
+  }
+
   test('menu selection dispatches only for known integer ids', () async {
     var selected = 0;
     await Tray.instance.show(

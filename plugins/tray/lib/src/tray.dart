@@ -40,6 +40,8 @@ final class Tray {
   Map<int, TrayMenuItem> _itemsById = const {};
   Future<void> _queue = Future<void>.value();
   String? _signature;
+  EncodedTray? _encoded;
+  Brightness? _brightness;
   String _title = '';
   String _requestedTitle = '';
   bool _isVisible = false;
@@ -78,6 +80,8 @@ final class Tray {
     _itemsById = const {};
     _queue = Future<void>.value();
     _signature = null;
+    _encoded = null;
+    _brightness = null;
     _title = '';
     _requestedTitle = '';
     _isVisible = false;
@@ -116,6 +120,22 @@ final class Tray {
       _itemsById = encoded.itemsById;
       return;
     }
+    final previous = _encoded;
+    if (_isVisible && previous != null && _brightness == spec.brightness) {
+      final updates = TrayCodec.menuUpdates(previous, encoded);
+      if (updates != null &&
+          (updates.isEmpty ||
+              await _channel.invokeMethod<bool>(
+                    _methodUpdateMenuItems,
+                    <String, Object?>{'updates': updates},
+                  ) ==
+                  true)) {
+        _itemsById = encoded.itemsById;
+        _signature = encoded.signature;
+        _encoded = encoded;
+        return;
+      }
+    }
     final isApplied = await _channel
         .invokeMethod<bool>(_methodShow, <String, Object?>{
           'id': _stableId,
@@ -127,10 +147,13 @@ final class Tray {
         });
     if (isApplied != true) {
       _signature = null;
+      _encoded = null;
       return;
     }
     _itemsById = encoded.itemsById;
     _signature = encoded.signature;
+    _encoded = encoded;
+    _brightness = spec.brightness;
     _isVisible = true;
   }
 
@@ -151,6 +174,7 @@ final class Tray {
   Future<void> _hide() async {
     _itemsById = const {};
     _signature = null;
+    _encoded = null;
     _title = '';
     if (!_isVisible) {
       return;
@@ -181,6 +205,7 @@ final class Tray {
     );
     if (applied == true) {
       _signature = null;
+      _encoded = null;
       return true;
     }
     return false;

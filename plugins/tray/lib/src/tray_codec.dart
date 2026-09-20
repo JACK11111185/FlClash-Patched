@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+
 import 'tray_menu.dart';
 import 'tray_spec.dart';
 
@@ -21,6 +23,60 @@ final class EncodedTray {
 
 abstract final class TrayCodec {
   static const int firstItemId = 1024;
+
+  static List<Map<String, Object?>>? menuUpdates(
+    EncodedTray previous,
+    EncodedTray next,
+  ) {
+    if (!mapEquals(previous.icon, next.icon) ||
+        previous.toolTip != next.toolTip) {
+      return null;
+    }
+    final updates = <Map<String, Object?>>[];
+    final keys = <Object>{};
+    const mutableFields = {
+      'label',
+      'sublabel',
+      'sublabelStyle',
+      'enabled',
+      'checked',
+    };
+    bool compare(List<Object?> before, List<Object?> after) {
+      if (before.length != after.length) return false;
+      for (var i = 0; i < before.length; i++) {
+        final oldItem = before[i] as Map<String, Object?>;
+        final newItem = after[i] as Map<String, Object?>;
+        final key = newItem['key'];
+        if (key != null && !keys.add(key)) return false;
+        final update = <String, Object?>{};
+        for (final field in {...oldItem.keys, ...newItem.keys}) {
+          final oldValue = oldItem[field];
+          final newValue = newItem[field];
+          if (field == 'items') {
+            if (oldValue is! List<Object?> ||
+                newValue is! List<Object?> ||
+                !compare(oldValue, newValue)) {
+              return false;
+            }
+          } else if (oldValue != newValue &&
+              !(oldValue is List &&
+                  newValue is List &&
+                  listEquals(oldValue, newValue))) {
+            if (!mutableFields.contains(field) || newItem['key'] == null) {
+              return false;
+            }
+            update[field] = newValue ?? '';
+          }
+        }
+        if (update.isNotEmpty) {
+          updates.add({'key': newItem['key'], ...update});
+        }
+      }
+      return true;
+    }
+
+    return compare(previous.menu, next.menu) ? updates : null;
+  }
 
   static EncodedTray encode(TraySpec spec) {
     final itemsById = <int, TrayMenuItem>{};
