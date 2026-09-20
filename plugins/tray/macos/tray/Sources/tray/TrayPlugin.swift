@@ -5,6 +5,8 @@ public class TrayPlugin: NSObject, FlutterPlugin, NSMenuDelegate {
     private var channel: FlutterMethodChannel!
     private var statusItem: TrayStatusItem?
     private var menu: TrayMenu?
+    private var cachedIcon: NSDictionary?
+    private var cachedImage: NSImage?
 
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "tray", binaryMessenger: registrar.messenger)
@@ -86,6 +88,8 @@ public class TrayPlugin: NSObject, FlutterPlugin, NSMenuDelegate {
         statusItem?.remove()
         statusItem = nil
         menu = nil
+        cachedIcon = nil
+        cachedImage = nil
     }
 
     private func openMenu() -> Bool {
@@ -119,6 +123,10 @@ public class TrayPlugin: NSObject, FlutterPlugin, NSMenuDelegate {
     }
 
     private func makeImage(_ icon: [String: Any]) -> NSImage? {
+        let descriptor = icon as NSDictionary
+        if cachedIcon == descriptor, let cachedImage {
+            return cachedImage
+        }
         let size = icon["size"] as? Int ?? 18
         let pointSize = NSSize(width: size, height: size)
         let image = NSImage(size: pointSize)
@@ -135,6 +143,8 @@ public class TrayPlugin: NSObject, FlutterPlugin, NSMenuDelegate {
             return nil
         }
         image.isTemplate = icon["isTemplate"] as? Bool ?? false
+        cachedIcon = descriptor
+        cachedImage = image
         return image
     }
 

@@ -662,146 +662,133 @@ final class TrayMenu: NSMenu, NSMenuDelegate {
 
     @discardableResult
     func updateMenuItems(_ updates: [[String: Any]]) -> Bool {
-        guard updates.allSatisfy({ arguments in
+        var pending: [String: [String: Any]] = [:]
+        for arguments in updates {
             guard let key = arguments["key"] as? String else {
                 return false
             }
-            return containsMenuItem(key)
-        }) else {
+            pending[key, default: [:]].merge(arguments) { _, new in new }
+        }
+        if pending.isEmpty {
+            return true
+        }
+        var missing = Set(pending.keys)
+        collectMatchingKeys(&missing)
+        guard missing.isEmpty else {
             return false
         }
-        for arguments in updates {
-            if !applyMenuItemUpdate(arguments, updateWidths: false) {
-                return false
-            }
-        }
-        updateCustomViewWidthsRecursively()
+        applyMenuItemUpdates(&pending)
         return true
     }
 
-    private func containsMenuItem(_ key: String) -> Bool {
+    private func collectMatchingKeys(_ missing: inout Set<String>) {
         if let deferredItems {
-            return Self.containsDeferredItem(key, in: deferredItems)
+            Self.collectMatchingKeys(in: deferredItems, missing: &missing)
+            return
         }
         for item in items {
-            if item.representedObject as? String == key {
-                return true
+            if missing.isEmpty { return }
+            if let key = item.representedObject as? String {
+                missing.remove(key)
             }
-            if let submenu = item.submenu as? TrayMenu,
-               submenu.containsMenuItem(key) {
-                return true
-            }
-        }
-        return false
-    }
-
-    private static func containsDeferredItem(
-        _ key: String,
-        in entries: [[String: Any]]
-    ) -> Bool {
-        entries.contains { entry in
-            entry["key"] as? String == key
-                || containsDeferredItem(key, in: entry["items"] as? [[String: Any]] ?? [])
+            (item.submenu as? TrayMenu)?.collectMatchingKeys(&missing)
         }
     }
 
-    private static func updateDeferredItem(
-        _ key: String,
-        arguments: [String: Any],
+    private static func collectMatchingKeys(
+        in entries: [[String: Any]],
+        missing: inout Set<String>
+    ) {
+        for entry in entries {
+            if missing.isEmpty { return }
+            if let key = entry["key"] as? String {
+                missing.remove(key)
+            }
+            if let children = entry["items"] as? [[String: Any]] {
+                collectMatchingKeys(in: children, missing: &missing)
+            }
+        }
+    }
+
+    private static func applyDeferredUpdates(
+        _ pending: inout [String: [String: Any]],
         entries: inout [[String: Any]]
-    ) -> Bool {
+    ) {
         for index in entries.indices {
-            if entries[index]["key"] as? String == key {
+            if pending.isEmpty { return }
+            if let key = entries[index]["key"] as? String,
+               let arguments = pending.removeValue(forKey: key) {
                 entries[index].merge(arguments) { _, new in new }
-                return true
             }
-            if var children = entries[index]["items"] as? [[String: Any]],
-               updateDeferredItem(key, arguments: arguments, entries: &children) {
+            if var children = entries[index]["items"] as? [[String: Any]] {
+                applyDeferredUpdates(&pending, entries: &children)
                 entries[index]["items"] = children
-                return true
             }
         }
-        return false
     }
 
-    private func applyMenuItemUpdate(
-        _ arguments: [String: Any],
-        updateWidths: Bool
-    ) -> Bool {
-        guard let key = arguments["key"] as? String else {
-            return false
-        }
+    private func applyMenuItemUpdates(_ pending: inout [String: [String: Any]]) {
         if var entries = deferredItems {
-            let applied = Self.updateDeferredItem(key, arguments: arguments, entries: &entries)
+            deferredItems = nil
+            Self.applyDeferredUpdates(&pending, entries: &entries)
             deferredItems = entries
-            return applied
+            return
         }
+        var changed = false
         for item in items {
-            if item.representedObject as? String == key {
-                let label = arguments["label"] as? String
-                let sublabel = arguments["sublabel"] as? String
-                let style = (arguments["sublabelStyle"] as? String).flatMap(
-                    TrayMenuItemSublabelStyle.init(rawValue:)
-                )
-                let nativeItem = item as? TrayNativeMenuItem
-                let checked = nativeItem?.trayType == .checkbox
-                    ? arguments["checked"] as? Bool
-                    : nil
-                if let label {
-                    item.title = label
-                }
-                if let enabled = arguments["enabled"] as? Bool {
-                    item.isEnabled = enabled
-                    if nativeItem?.trayType != .submenu {
-                        item.action = enabled ? #selector(didSelectItem(_:)) : nil
-                    }
-                }
-                if let checked {
-                    item.state = checked ? .on : .off
-                }
-                if let view = item.view as? TrayMenuItemView {
-                    view.updateMenuItem(
-                        label: label,
-                        sublabel: sublabel,
-                        sublabelStyle: style,
-                        checked: checked
-                    )
-                } else if let sublabel, !sublabel.isEmpty,
-                          let type = nativeItem?.trayType {
-                    item.view = TrayMenuItemView(
-                        label: item.title,
-                        sublabel: sublabel,
-                        sublabelStyle: style
-                            ?? (type == .submenu ? .secondary : .badge),
-                        checked: type == .checkbox && item.state == .on,
-                        keepsMenuOpen: false,
-                        hasSubmenu: type == .submenu
-                    )
-                }
-                if updateWidths {
-                    updateCustomViewWidths(
-                        items.compactMap { $0.view as? TrayMenuItemView }
-                    )
-                }
-                return true
+            if pending.isEmpty { break }
+            if let key = item.representedObject as? String,
+               let arguments = pending.removeValue(forKey: key) {
+                applyMenuItemUpdate(arguments, to: item)
+                changed = true
             }
-            if let submenu = item.submenu as? TrayMenu,
-               submenu.applyMenuItemUpdate(
-                   arguments,
-                   updateWidths: updateWidths
-               ) {
-                return true
-            }
+            (item.submenu as? TrayMenu)?.applyMenuItemUpdates(&pending)
         }
-        return false
+        if changed {
+            updateCustomViewWidths(items.compactMap { $0.view as? TrayMenuItemView })
+        }
     }
 
-    private func updateCustomViewWidthsRecursively() {
-        updateCustomViewWidths(
-            items.compactMap { $0.view as? TrayMenuItemView }
+    private func applyMenuItemUpdate(_ arguments: [String: Any], to item: NSMenuItem) {
+        let label = arguments["label"] as? String
+        let sublabel = arguments["sublabel"] as? String
+        let style = (arguments["sublabelStyle"] as? String).flatMap(
+            TrayMenuItemSublabelStyle.init(rawValue:)
         )
-        for item in items {
-            (item.submenu as? TrayMenu)?.updateCustomViewWidthsRecursively()
+        let nativeItem = item as? TrayNativeMenuItem
+        let checked = nativeItem?.trayType == .checkbox
+            ? arguments["checked"] as? Bool
+            : nil
+        if let label {
+            item.title = label
+        }
+        if let enabled = arguments["enabled"] as? Bool {
+            item.isEnabled = enabled
+            if nativeItem?.trayType != .submenu {
+                item.action = enabled ? #selector(didSelectItem(_:)) : nil
+            }
+        }
+        if let checked {
+            item.state = checked ? .on : .off
+        }
+        if let view = item.view as? TrayMenuItemView {
+            view.updateMenuItem(
+                label: label,
+                sublabel: sublabel,
+                sublabelStyle: style,
+                checked: checked
+            )
+        } else if let sublabel, !sublabel.isEmpty,
+                  let type = nativeItem?.trayType {
+            item.view = TrayMenuItemView(
+                label: item.title,
+                sublabel: sublabel,
+                sublabelStyle: style
+                    ?? (type == .submenu ? .secondary : .badge),
+                checked: type == .checkbox && item.state == .on,
+                keepsMenuOpen: false,
+                hasSubmenu: type == .submenu
+            )
         }
     }
 

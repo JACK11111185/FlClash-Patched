@@ -75,6 +75,31 @@ enum TrayMenuTests {
         precondition(replacementItem.state == .off && !replacementItem.isEnabled)
         precondition(replacementItem.action == nil)
 
+        precondition(menu.updateMenuItems([
+            ["key": "replacement", "label": "renamed"],
+            ["key": "replacement", "checked": true, "enabled": true],
+        ]))
+        precondition(replacementItem.title == "renamed" && replacementItem.state == .on)
+        precondition(replacementItem.action != nil)
+        precondition(first.items[0] === firstItem)
+        precondition(!menu.updateMenuItems([
+            ["key": "replacement", "label": "must not apply"],
+            ["label": "missing key"],
+        ]))
+        precondition(replacementItem.title == "renamed")
+
+        let bulk = (0..<2000).map { ["key": "node-\($0)", "label": "updated-\($0)"] }
+        precondition(menu.updateMenuItems(bulk))
+        for index in first.items.indices {
+            precondition(first.items[index].title == "updated-\(index)")
+        }
+        let duplicates = TrayMenu(items: [
+            proxy("duplicate", id: 1), proxy("duplicate", id: 2),
+        ], onSelect: { _ in })
+        precondition(duplicates.updateMenuItems([["key": "duplicate", "label": "first only"]]))
+        precondition(duplicates.items[0].title == "first only")
+        precondition(duplicates.items[1].title == "duplicate")
+
         let nested = TrayMenu(items: [group("outer", items: [
             group("inner", items: [proxy("nested", id: 100)]),
         ])], onSelect: { _ in })

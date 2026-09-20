@@ -102,7 +102,7 @@ void main() {
     expect(pluginSource, isNot(contains('case "updateMenuItem":')));
     expect(menuSource, contains('arguments["sublabel"] as? String'));
     expect(menuSource, contains('arguments["checked"] as? Bool'));
-    expect(menuSource, contains('updateCustomViewWidthsRecursively()'));
+    expect(menuSource, contains('updateCustomViewWidths(items.compactMap'));
   });
 
   test('macOS custom menu items use native selection and state artwork', () {
