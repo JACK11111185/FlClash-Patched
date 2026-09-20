@@ -43,6 +43,11 @@ class _TrayManagerState extends ConsumerState<TrayManager> {
         _reportFailure(ref.read(systemActionProvider.notifier).updateTray());
       }
     });
+    ref.listenManual(currentBrightnessProvider, (prev, next) {
+      if (prev != next) {
+        _reportFailure(ref.read(systemActionProvider.notifier).updateTray());
+      }
+    });
     ref.listenManual(loadedLocaleProvider, (prev, next) {
       if (prev != null && prev != next) {
         _reportFailure(ref.read(systemActionProvider.notifier).updateTray());
