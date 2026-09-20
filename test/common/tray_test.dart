@@ -81,6 +81,27 @@ void main() {
   });
 
   group('getTrayDelayPresentation', () {
+    for (final (delay, style) in [
+      (null, TrayMenuItemSublabelStyle.badge),
+      (0, TrayMenuItemSublabelStyle.muted),
+      (-1, TrayMenuItemSublabelStyle.destructive),
+      (1, TrayMenuItemSublabelStyle.badge),
+      (599, TrayMenuItemSublabelStyle.badge),
+      (600, TrayMenuItemSublabelStyle.warning),
+      (2000, TrayMenuItemSublabelStyle.warning),
+    ]) {
+      test('uses $style for $delay ms', () {
+        expect(
+          getTrayDelayPresentation(
+            delay,
+            loadingLabel: 'Loading',
+            timeoutLabel: 'Timeout',
+          ).style,
+          style,
+        );
+      });
+    }
+
     test('formats loading, timeout, and successful delay values', () {
       expect(
         getTrayDelayPresentation(

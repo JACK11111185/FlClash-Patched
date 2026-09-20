@@ -11,7 +11,7 @@ enum TrayMenuItemModifier {
   shift,
 }
 
-enum TrayMenuItemSublabelStyle { badge, secondary, muted, destructive }
+enum TrayMenuItemSublabelStyle { badge, secondary, muted, destructive, warning }
 
 final class TrayMenuItemUpdate {
   const TrayMenuItemUpdate({

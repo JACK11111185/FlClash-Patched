@@ -96,7 +96,12 @@ TrayMenuShortcut? getTrayMenuShortcut(HotKeyAction hotKeyAction) {
   if (delay < 0) {
     return (label: timeoutLabel, style: TrayMenuItemSublabelStyle.destructive);
   }
-  return (label: '$delay ms', style: TrayMenuItemSublabelStyle.badge);
+  return (
+    label: '$delay ms',
+    style: delay < 600
+        ? TrayMenuItemSublabelStyle.badge
+        : TrayMenuItemSublabelStyle.warning,
+  );
 }
 
 @visibleForTesting
@@ -381,7 +386,7 @@ class AppTray implements TrayPort {
     return TrayMenuSubmenu(
       label: group.name,
       sublabel: getTrayGroupSelectionLabel(group, selectedMap),
-      usesCustomView: true,
+      usesCustomView: isMacOS,
       items: [
         TrayMenuAction(
           key: _trayDelayTestKey(group.name),
@@ -422,7 +427,7 @@ class AppTray implements TrayPort {
       label: proxy.name,
       sublabel: presentation.label,
       sublabelStyle: presentation.style,
-      usesCustomView: true,
+      usesCustomView: isMacOS,
       checked: selectedProxyName == proxy.name,
       onSelected: () {
         read(

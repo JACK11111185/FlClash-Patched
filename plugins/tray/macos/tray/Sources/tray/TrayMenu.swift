@@ -4,6 +4,7 @@ private enum TrayMenuItemSublabelStyle: String {
     case badge
     case muted
     case destructive
+    case warning
     case secondary
 }
 
@@ -534,6 +535,11 @@ private final class TrayMenuItemView: NSView {
                 enabled ? 1 : 0.45
             )
             foregroundColor = .white
+        case .warning:
+            backgroundColor = NSColor.systemOrange.withAlphaComponent(
+                enabled ? 1 : 0.45
+            )
+            foregroundColor = .black
         case .secondary:
             return
         }

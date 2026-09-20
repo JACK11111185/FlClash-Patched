@@ -13,6 +13,9 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
+
+#include "tray_menu_icons.h"
 
 namespace tray {
 
@@ -38,6 +41,7 @@ class TrayPlugin : public flutter::Plugin {
     bool checkbox;
     std::string label;
     std::string sublabel;
+    std::string sublabel_style;
   };
 
   void HandleMethodCall(
@@ -52,6 +56,8 @@ class TrayPlugin : public flutter::Plugin {
   bool ApplyIcon(bool add);
   void RebuildMenu(HMENU menu, const flutter::EncodableList& items);
   void SendEvent(const char* name, const flutter::EncodableValue& arguments);
+  void SendMenuSelection(int command);
+  void RefreshMenuIcons();
 
   std::optional<LRESULT> HandleWindowProc(HWND window,
                                           UINT message,
@@ -64,9 +70,12 @@ class TrayPlugin : public flutter::Plugin {
   NOTIFYICONDATAW icon_data_{};
   HMENU menu_ = nullptr;
   std::unordered_map<std::string, MenuItemLocation> menu_items_;
+  std::unordered_set<UINT> persistent_menu_items_;
+  TrayMenuIcons menu_icons_;
   std::wstring tool_tip_;
   bool visible_ = false;
   bool menu_is_dark_ = false;
+  UINT menu_dpi_ = 96;
 
   UINT taskbar_created_message_ = 0;
 };

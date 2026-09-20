@@ -325,37 +325,43 @@ void main() {
     ]);
   });
 
-  test('an open macOS menu does not block live item updates', () async {
-    final menuClosed = Completer<void>();
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(_channel, (call) async {
-          calls.add(call);
-          if (call.method == 'openMenu') {
-            await menuClosed.future;
-          }
-          return true;
-        });
-    await Tray.instance.show(
-      _spec(
-        menu: const [TrayMenuAction(key: 'delay', label: 'Delay test')],
-      ),
+  for (final platform in [TargetPlatform.macOS, TargetPlatform.windows]) {
+    test(
+      'an open ${platform.name} menu does not block live item updates',
+      () async {
+        debugDefaultTargetPlatformOverride = platform;
+        final menuClosed = Completer<void>();
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(_channel, (call) async {
+              calls.add(call);
+              if (call.method == 'openMenu') {
+                await menuClosed.future;
+              }
+              return true;
+            });
+        await Tray.instance.show(
+          _spec(
+            menu: const [TrayMenuAction(key: 'delay', label: 'Delay test')],
+          ),
+        );
+
+        final open = Tray.instance.openMenu();
+        await Future<void>.delayed(Duration.zero);
+        final update = Tray.instance.updateMenuItems(const [
+          TrayMenuItemUpdate(key: 'delay', enabled: false),
+        ]);
+        await update;
+
+        expect(calls.map((call) => call.method), [
+          'show',
+          'openMenu',
+          'updateMenuItems',
+        ]);
+        menuClosed.complete();
+        await open;
+      },
     );
-
-    final open = Tray.instance.openMenu();
-    await Future<void>.delayed(Duration.zero);
-    final update = Tray.instance.updateMenuItems(const [
-      TrayMenuItemUpdate(key: 'delay', enabled: false),
-    ]);
-    await update;
-
-    expect(calls.map((call) => call.method), [
-      'show',
-      'openMenu',
-      'updateMenuItems',
-    ]);
-    menuClosed.complete();
-    await open;
-  });
+  }
 
   test('a rejected show keeps callbacks for the visible menu', () async {
     var oldSelected = 0;

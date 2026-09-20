@@ -50,8 +50,15 @@ rebuilds and click dispatch stays stable while a menu is open.
 Proxy group submenus are available on all three desktop platforms. Windows displays
 item sublabels in the right-hand text column; Linux appends them in parentheses so
 AppIndicator hosts can display the selected proxy and delay results. Keyed updates
-preserve the main label when only the sublabel changes. Custom views, sublabel styles
-and `keepsMenuOpen` are macOS-only; Windows and Linux close the menu after an action.
+preserve the main label when only the sublabel changes. macOS and Windows honor
+`keepsMenuOpen`, so delay tests run and update results inside the open submenu.
+Windows supports mouse clicks and Enter/Space activation. Its menu rows use system
+drawing, with native bitmap icons showing green (`badge`), yellow (`warning`), red
+(`destructive`) or gray (`muted`/`secondary`) status dots beside the node name.
+Text, checkmarks, selection backgrounds and layout follow the system menu theme.
+The icons scale with menu DPI and follow the system foreground in high-contrast
+mode. macOS uses colored badges. Linux's labels remain plain text and its menu
+closes after an action.
 
 ## Events
 

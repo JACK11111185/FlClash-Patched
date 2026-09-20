@@ -527,10 +527,12 @@ void main() {
         final submenu = proxySubmenu();
         expect(submenu['label'], proxyGroup.name);
         expect(submenu['sublabel'], 'B & 香港');
+        expect(submenu['usesCustomView'], isNull);
         final children = (submenu['items'] as List).cast<Map>();
         expect(children.first['label'], currentAppLocalizations.delayTest);
         expect(children.last['label'], 'B & 香港');
         expect(children.last['sublabel'], '42 ms');
+        expect(children.last['usesCustomView'], isNull);
         expect(children.last['checked'], isTrue);
         expect(children[2]['checked'], isFalse);
         expect(
@@ -591,6 +593,10 @@ void main() {
               'delay:$groupKey:${Uri.encodeComponent(proxy.name)}',
           ]);
           expect(delays.map((item) => item['sublabel']), everyElement('42 ms'));
+          expect(
+            delays.map((item) => item['sublabelStyle']),
+            everyElement('badge'),
+          );
         },
       );
 

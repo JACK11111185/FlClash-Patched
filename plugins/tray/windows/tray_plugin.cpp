@@ -1,4 +1,5 @@
 #include "tray_plugin.h"
+#include "tray_menu_session.h"
 #include "tray_window.h"
 
 #include <strsafe.h>
@@ -226,13 +227,27 @@ void TrayPlugin::RebuildMenu(HMENU menu, const flutter::EncodableList& items) {
       item_id = reinterpret_cast<UINT_PTR>(submenu);
     }
 
+    if ((*type == "action" || *type == "checkbox") &&
+        BoolAt(*entry, "keepsMenuOpen", false)) {
+      persistent_menu_items_.insert(static_cast<UINT>(item_id));
+    }
     ::AppendMenuW(menu, flags, item_id, text.c_str());
+
+    const auto* style = StringAt(*entry, "sublabelStyle");
+    const std::string sublabel_style = style == nullptr ? "badge" : *style;
+    if (*type == "checkbox" && !sublabel_text.empty()) {
+      MENUITEMINFOW info{};
+      info.cbSize = sizeof(info);
+      info.fMask = MIIM_BITMAP;
+      info.hbmpItem = menu_icons_.Get(sublabel_style);
+      ::SetMenuItemInfoW(menu, position, TRUE, &info);
+    }
 
     const std::string* key = StringAt(*entry, "key");
     if (key != nullptr) {
       menu_items_.try_emplace(
           *key, MenuItemLocation{menu, position, *type == "checkbox",
-                                 label_text, sublabel_text});
+                                 label_text, sublabel_text, sublabel_style});
     }
   }
 }
@@ -282,9 +297,11 @@ bool TrayPlugin::Show(const flutter::EncodableMap& arguments) {
 
   const flutter::EncodableList* items = ListAt(arguments, "menu");
   if (items != nullptr) {
+    menu_icons_.SetAppearance(menu_dpi_, menu_is_dark_);
     if (menu_ == nullptr) {
       menu_ = ::CreatePopupMenu();
     }
+    persistent_menu_items_.clear();
     menu_items_.clear();
     RebuildMenu(menu_, *items);
   }
@@ -306,6 +323,8 @@ void TrayPlugin::Hide() {
     menu_ = nullptr;
   }
   menu_items_.clear();
+  persistent_menu_items_.clear();
+  menu_icons_.Clear();
 
   tool_tip_.clear();
   visible_ = false;
@@ -329,27 +348,41 @@ bool TrayPlugin::OpenMenu(bool bring_app_to_front) {
   }
   POINT cursor;
   ::GetCursorPos(&cursor);
+  if (tray_window_ != nullptr && window == tray_window_->hwnd()) {
+    ::SetWindowPos(window, nullptr, cursor.x, cursor.y, 0, 0,
+                   SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+  }
+  menu_dpi_ = ::GetDpiForWindow(window);
+  if (menu_icons_.SetAppearance(menu_dpi_, menu_is_dark_)) {
+    RefreshMenuIcons();
+  }
 
   ApplyMenuBrightness(window, menu_is_dark_);
   ::SetForegroundWindow(window);
+  TrayMenuSession session(window, persistent_menu_items_,
+                           [this](int command) { SendMenuSelection(command); });
   const int command = ::TrackPopupMenu(
       menu_, TPM_BOTTOMALIGN | TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON,
       cursor.x, cursor.y, 0, window, nullptr);
   ::PostMessageW(window, WM_NULL, 0, 0);
 
   if (command != 0) {
-    flutter::EncodableMap arguments;
-    arguments[flutter::EncodableValue("id")] = flutter::EncodableValue(command);
-    const LONG timestamp = ::GetMessageTime();
-    if (timestamp >= 0) {
-      arguments[flutter::EncodableValue("activationTimestamp")] =
-          flutter::EncodableValue(static_cast<int>(timestamp));
-    }
-    SendEvent("onMenuItemSelected", flutter::EncodableValue(arguments));
+    SendMenuSelection(command);
   } else {
     ::Shell_NotifyIconW(NIM_SETFOCUS, &icon_data_);
   }
   return true;
+}
+
+void TrayPlugin::SendMenuSelection(int command) {
+  flutter::EncodableMap arguments;
+  arguments[flutter::EncodableValue("id")] = flutter::EncodableValue(command);
+  const LONG timestamp = ::GetMessageTime();
+  if (timestamp >= 0) {
+    arguments[flutter::EncodableValue("activationTimestamp")] =
+        flutter::EncodableValue(static_cast<int>(timestamp));
+  }
+  SendEvent("onMenuItemSelected", flutter::EncodableValue(arguments));
 }
 
 bool TrayPlugin::ApplyMenuItemUpdate(
@@ -365,9 +398,10 @@ bool TrayPlugin::ApplyMenuItemUpdate(
 
   const std::string* label = StringAt(arguments, "label");
   const std::string* sublabel = StringAt(arguments, "sublabel");
+  const std::string* style = StringAt(arguments, "sublabelStyle");
   const bool* enabled = BoolPointerAt(arguments, "enabled");
   const bool* checked = BoolPointerAt(arguments, "checked");
-  if (label == nullptr && sublabel == nullptr && enabled == nullptr &&
+  if (label == nullptr && sublabel == nullptr && style == nullptr && enabled == nullptr &&
       (checked == nullptr || !location->second.checkbox)) {
     return true;
   }
@@ -401,8 +435,17 @@ bool TrayPlugin::ApplyMenuItemUpdate(
     info.fMask |= MIIM_STRING;
     info.dwTypeData = text.data();
   }
-  if (!::SetMenuItemInfoW(location->second.menu, location->second.position,
-                          TRUE, &info)) {
+  if (location->second.checkbox && (sublabel != nullptr || style != nullptr)) {
+    const auto& next_sublabel =
+        sublabel == nullptr ? location->second.sublabel : *sublabel;
+    const auto& next_style =
+        style == nullptr ? location->second.sublabel_style : *style;
+    info.fMask |= MIIM_BITMAP;
+    info.hbmpItem = next_sublabel.empty() ? nullptr : menu_icons_.Get(next_style);
+  }
+  if (info.fMask != 0 &&
+      !::SetMenuItemInfoW(location->second.menu, location->second.position,
+                           TRUE, &info)) {
     return false;
   }
   if (label != nullptr) {
@@ -410,6 +453,9 @@ bool TrayPlugin::ApplyMenuItemUpdate(
   }
   if (sublabel != nullptr) {
     location->second.sublabel = *sublabel;
+  }
+  if (style != nullptr) {
+    location->second.sublabel_style = *style;
   }
   return true;
 }
@@ -426,13 +472,33 @@ bool TrayPlugin::UpdateMenuItems(
       return false;
     }
   }
+  std::unordered_set<HMENU> changed_menus;
   for (const auto& value : updates) {
     const auto& update = std::get<flutter::EncodableMap>(value);
     if (!ApplyMenuItemUpdate(update)) {
       return false;
     }
+    changed_menus.insert(menu_items_.at(*StringAt(update, "key")).menu);
+  }
+  for (const auto menu : changed_menus) {
+    TrayMenuSession::Redraw(menu);
   }
   return true;
+}
+
+void TrayPlugin::RefreshMenuIcons() {
+  for (const auto& entry : menu_items_) {
+    const auto& item = entry.second;
+    if (item.checkbox) {
+      MENUITEMINFOW info{};
+      info.cbSize = sizeof(info);
+      info.fMask = MIIM_BITMAP;
+      info.hbmpItem = item.sublabel.empty()
+                          ? nullptr
+                          : menu_icons_.Get(item.sublabel_style);
+      ::SetMenuItemInfoW(item.menu, item.position, TRUE, &info);
+    }
+  }
 }
 
 std::optional<LRESULT> TrayPlugin::HandleWindowProc(HWND window,
