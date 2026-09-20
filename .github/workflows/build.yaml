@@ -49,13 +49,23 @@ jobs:
       - name: Analyze
         run: flutter analyze --no-fatal-infos
 
+      - name: Skip native build hooks
+        run: |
+          yq -i '.hooks.user_defines.setup.build_assets = false | .hooks.user_defines.rust_api.build_assets = false' pubspec.yaml
+
+      - name: Run tests with coverage
+        run: flutter test --reporter expanded --coverage
+
+      - name: Check coverage
+        run: dart tool/check_coverage.dart coverage/lcov.info 75
+
   dart-tests:
     name: Dart tests (${{ matrix.shard }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
       matrix:
-        shard: [0, 1, 2, 3]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -78,58 +88,9 @@ jobs:
 
       - name: Run tests
         run: >-
-          flutter test --reporter expanded --coverage
+          flutter test --reporter expanded
           --total-shards=${{ strategy.job-total }}
           --shard-index=${{ matrix.shard }}
-
-      - name: Upload coverage
-        uses: actions/upload-artifact@v7
-        with:
-          name: dart-coverage-${{ matrix.shard }}
-          path: coverage/lcov.info
-          if-no-files-found: error
-          retention-days: 1
-
-  dart:
-    name: Dart
-    needs: [ dart-checks, dart-tests ]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-
-      - name: Download coverage
-        uses: actions/download-artifact@v8
-        with:
-          path: coverage/shards
-          pattern: dart-coverage-*
-
-      - name: Install LCOV
-        run: |
-          sudo apt-get update
-          sudo apt-get install --yes lcov
-
-      - name: Merge coverage
-        shell: bash
-        run: |
-          shopt -s nullglob
-          reports=(coverage/shards/dart-coverage-*/lcov.info)
-          test "${#reports[@]}" -eq 4
-          args=()
-          for report in "${reports[@]}"; do
-            args+=(--add-tracefile "$report")
-          done
-          lcov "${args[@]}" --output-file coverage/lcov.info
-
-      - name: Check coverage
-        run: dart tool/check_coverage.dart coverage/lcov.info 75
 
   plugins:
     name: Plugins
@@ -300,7 +261,7 @@ jobs:
 
   build:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    needs: [ dart, plugins, go, android, rust, windows-helper-test ]
+    needs: [ dart-checks, dart-tests, plugins, go, android, rust, windows-helper-test ]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

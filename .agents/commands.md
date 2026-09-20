@@ -242,9 +242,10 @@ while `v<pubspec version>` is still tagged it refuses to collect anything and th
 
 ## Verify
 
-Every branch push runs `dart-checks` alongside four `dart-tests` shards. The
-`dart` job waits for all of them, merges the LCOV reports, and checks the total
-and per-group coverage floors. The equivalent local root-package checks are:
+Every branch push runs `dart-checks` alongside eight `dart-tests` shards.
+After formatting and analysis, `dart-checks` runs the full test suite with
+coverage enabled and checks the total and per-group floors. The equivalent
+local root-package checks are:
 
 ```bash
 bash tool/check_commit_msg_test.sh
@@ -256,11 +257,11 @@ flutter test --reporter expanded --coverage
 dart run tool/check_coverage.dart coverage/lcov.info 75
 ```
 
-Each CI test shard uses `--total-shards=4 --shard-index=0` (indices 0–3), with
-fail-fast enabled for the test matrix. Coverage artifacts stay separate until
-`lcov --add-tracefile` merges them by source file and line; concatenating reports
-would count shared source lines multiple times. The existing `dart` release
-dependency covers static checks, all test shards, and the merged coverage gate.
+Each CI test shard uses `--total-shards=8 --shard-index=0` (indices 0–7), with
+fail-fast enabled for the test matrix and no coverage collection. Coverage is
+collected only by `dart-checks`, without artifact transfers or report merging.
+Release builds depend directly on `dart-checks` (including its coverage gate)
+and all test shards.
 
 Run `flutter analyze` locally before committing when practical.
 
