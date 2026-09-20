@@ -6,7 +6,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/event.dart';
 import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart' show compute, visibleForTesting;
 
 import 'transport.dart';
 
@@ -17,6 +17,16 @@ const _maxTimeoutExtension = 3;
 const _maxExtensionGrace = Duration(seconds: 30);
 
 const _connectTimeout = Duration(seconds: 10);
+
+const _backgroundDecodeThreshold = 51200;
+
+Map<String, Object?> _decodeFrame(Uint8List frame) {
+  final decoded = json.decode(utf8.decode(frame));
+  if (decoded is! Map) {
+    throw const FormatException('Core transport data is not an object');
+  }
+  return Map<String, Object?>.from(decoded);
+}
 
 abstract interface class CoreRpcChannel {
   Future<T?> invoke<T>({
@@ -40,6 +50,8 @@ final class CoreRpcClient implements CoreRpcChannel {
   int _methodCallId = 0;
   bool _shutdownRequested = false;
   Future<void>? _closeOperation;
+  Future<void> _frameWork = Future<void>.value();
+  int _frameGeneration = 0;
 
   /// Time since Core last answered any request. A method timeout is a liveness
   /// guard for a stalled link (a restart mid-flight, a stream that stopped
@@ -172,12 +184,17 @@ final class CoreRpcClient implements CoreRpcChannel {
   }
 
   void _handleFrame(Uint8List frame) {
+    final generation = _frameGeneration;
+    _frameWork = _frameWork.then((_) => _processFrame(frame, generation));
+  }
+
+  Future<void> _processFrame(Uint8List frame, int generation) async {
+    if (_shutdownRequested || generation != _frameGeneration) return;
     try {
-      final decoded = json.decode(utf8.decode(frame));
-      if (decoded is! Map) {
-        throw const FormatException('Core transport data is not an object');
-      }
-      final data = Map<String, Object?>.from(decoded);
+      final data = frame.length >= _backgroundDecodeThreshold
+          ? await compute(_decodeFrame, frame, debugLabel: 'Core IPC decode')
+          : _decodeFrame(frame);
+      if (_shutdownRequested || generation != _frameGeneration) return;
       if (data.containsKey('method')) {
         _handleMethodCall(CoreMethodCall.fromJson(data));
       } else {
@@ -239,6 +256,7 @@ final class CoreRpcClient implements CoreRpcChannel {
   void _handleTransportEvent(DesktopTransportEvent event) {
     switch (event) {
       case TransportDisconnected():
+        _invalidateFrames();
         _failPending(
           const CoreMethodException(
             code: 'transport_disconnected',
@@ -246,6 +264,7 @@ final class CoreRpcClient implements CoreRpcChannel {
           ),
         );
       case TransportFailed(:final error):
+        _invalidateFrames();
         _failPending(
           CoreMethodException(
             code: 'transport_error',
@@ -256,6 +275,11 @@ final class CoreRpcClient implements CoreRpcChannel {
       case TransportReady() || TransportConnected():
         break;
     }
+  }
+
+  void _invalidateFrames() {
+    _frameGeneration++;
+    _frameWork = Future<void>.value();
   }
 
   void _failPending(CoreMethodException error) {
@@ -284,6 +308,7 @@ final class CoreRpcClient implements CoreRpcChannel {
       return;
     }
     _shutdownRequested = true;
+    _invalidateFrames();
     _completePending();
   }
 
