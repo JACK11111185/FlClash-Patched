@@ -94,20 +94,34 @@ LRESULT CALLBACK TrayMenuSession::FilterProc(int code, WPARAM wparam,
   return ::CallNextHookEx(nullptr, code, wparam, lparam);
 }
 
-void TrayMenuSession::Redraw(HMENU menu) {
+void TrayMenuSession::InvalidateItem(HMENU menu, UINT position) {
+  struct Update {
+    HMENU menu;
+    UINT position;
+  } update{menu, position};
   ::EnumThreadWindows(
       ::GetCurrentThreadId(),
       [](HWND window, LPARAM data) -> BOOL {
+        const auto& update = *reinterpret_cast<const Update*>(data);
         MENUBARINFO info{};
         info.cbSize = sizeof(info);
         if (::GetMenuBarInfo(window, OBJID_CLIENT, 0, &info) &&
-            info.hMenu == reinterpret_cast<HMENU>(data)) {
-          ::RedrawWindow(window, nullptr, nullptr,
-                         RDW_INVALIDATE | RDW_UPDATENOW | RDW_FRAME);
+            info.hMenu == update.menu) {
+          RECT rect{};
+          const bool has_rect =
+              ::GetMenuItemRect(nullptr, update.menu, update.position, &rect) !=
+              FALSE;
+          if (has_rect) {
+            ::MapWindowPoints(nullptr, window, reinterpret_cast<POINT*>(&rect),
+                              2);
+          }
+          // Let the menu loop coalesce paints without redrawing the frame.
+          ::InvalidateRect(window, has_rect ? &rect : nullptr, FALSE);
+          return FALSE;
         }
         return TRUE;
       },
-      reinterpret_cast<LPARAM>(menu));
+      reinterpret_cast<LPARAM>(&update));
 }
 
 }  // namespace tray

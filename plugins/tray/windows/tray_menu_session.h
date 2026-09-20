@@ -17,7 +17,7 @@ class TrayMenuSession {
   TrayMenuSession(const TrayMenuSession&) = delete;
   TrayMenuSession& operator=(const TrayMenuSession&) = delete;
 
-  static void Redraw(HMENU menu);
+  static void InvalidateItem(HMENU menu, UINT position);
 
  private:
   static LRESULT CALLBACK FilterProc(int code, WPARAM wparam, LPARAM lparam);

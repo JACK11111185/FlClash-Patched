@@ -414,6 +414,7 @@ bool TrayPlugin::ApplyMenuItemUpdate(
                             TRUE, &info)) {
       return false;
     }
+    const UINT previous_state = info.fState;
     if (enabled != nullptr) {
       info.fState &= ~(MFS_DISABLED | MFS_GRAYED);
       if (!*enabled) {
@@ -426,26 +427,34 @@ bool TrayPlugin::ApplyMenuItemUpdate(
         info.fState |= MFS_CHECKED;
       }
     }
+    if (info.fState == previous_state) {
+      info.fMask = 0;
+    }
   }
 
+  const auto& next_label = label == nullptr ? location->second.label : *label;
+  const auto& next_sublabel =
+      sublabel == nullptr ? location->second.sublabel : *sublabel;
+  const auto& next_style =
+      style == nullptr ? location->second.sublabel_style : *style;
   std::wstring text;
-  if (label != nullptr || sublabel != nullptr) {
-    text = MenuText(label == nullptr ? location->second.label : *label,
-                    sublabel == nullptr ? location->second.sublabel : *sublabel);
+  if (next_label != location->second.label ||
+      next_sublabel != location->second.sublabel) {
+    text = MenuText(next_label, next_sublabel);
     info.fMask |= MIIM_STRING;
     info.dwTypeData = text.data();
   }
-  if (location->second.checkbox && (sublabel != nullptr || style != nullptr)) {
-    const auto& next_sublabel =
-        sublabel == nullptr ? location->second.sublabel : *sublabel;
-    const auto& next_style =
-        style == nullptr ? location->second.sublabel_style : *style;
+  if (location->second.checkbox &&
+      (next_sublabel.empty() != location->second.sublabel.empty() ||
+       (!next_sublabel.empty() &&
+        next_style != location->second.sublabel_style))) {
     info.fMask |= MIIM_BITMAP;
-    info.hbmpItem = next_sublabel.empty() ? nullptr : menu_icons_.Get(next_style);
+    info.hbmpItem =
+        next_sublabel.empty() ? nullptr : menu_icons_.Get(next_style);
   }
   if (info.fMask != 0 &&
       !::SetMenuItemInfoW(location->second.menu, location->second.position,
-                           TRUE, &info)) {
+                          TRUE, &info)) {
     return false;
   }
   if (label != nullptr) {
@@ -456,6 +465,10 @@ bool TrayPlugin::ApplyMenuItemUpdate(
   }
   if (style != nullptr) {
     location->second.sublabel_style = *style;
+  }
+  if (info.fMask != 0) {
+    TrayMenuSession::InvalidateItem(location->second.menu,
+                                    location->second.position);
   }
   return true;
 }
@@ -472,16 +485,11 @@ bool TrayPlugin::UpdateMenuItems(
       return false;
     }
   }
-  std::unordered_set<HMENU> changed_menus;
   for (const auto& value : updates) {
     const auto& update = std::get<flutter::EncodableMap>(value);
     if (!ApplyMenuItemUpdate(update)) {
       return false;
     }
-    changed_menus.insert(menu_items_.at(*StringAt(update, "key")).menu);
-  }
-  for (const auto menu : changed_menus) {
-    TrayMenuSession::Redraw(menu);
   }
   return true;
 }
