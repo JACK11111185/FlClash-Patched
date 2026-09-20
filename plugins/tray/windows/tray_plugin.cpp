@@ -235,7 +235,8 @@ void TrayPlugin::RebuildMenu(HMENU menu, const flutter::EncodableList& items) {
 
     const auto* style = StringAt(*entry, "sublabelStyle");
     const std::string sublabel_style = style == nullptr ? "badge" : *style;
-    if (*type == "checkbox" && !sublabel_text.empty()) {
+    if (*type == "checkbox" && !sublabel_text.empty() &&
+        (flags & MF_CHECKED) == 0) {
       MENUITEMINFOW info{};
       info.cbSize = sizeof(info);
       info.fMask = MIIM_BITMAP;
@@ -408,13 +409,14 @@ bool TrayPlugin::ApplyMenuItemUpdate(
 
   MENUITEMINFOW info{};
   info.cbSize = sizeof(info);
-  if (enabled != nullptr || (checked != nullptr && location->second.checkbox)) {
-    info.fMask = MIIM_STATE;
+  if (enabled != nullptr || location->second.checkbox) {
+    info.fMask = MIIM_STATE | MIIM_BITMAP;
     if (!::GetMenuItemInfoW(location->second.menu, location->second.position,
                             TRUE, &info)) {
       return false;
     }
     const UINT previous_state = info.fState;
+    info.fMask = 0;
     if (enabled != nullptr) {
       info.fState &= ~(MFS_DISABLED | MFS_GRAYED);
       if (!*enabled) {
@@ -427,8 +429,8 @@ bool TrayPlugin::ApplyMenuItemUpdate(
         info.fState |= MFS_CHECKED;
       }
     }
-    if (info.fState == previous_state) {
-      info.fMask = 0;
+    if (info.fState != previous_state) {
+      info.fMask |= MIIM_STATE;
     }
   }
 
@@ -444,13 +446,15 @@ bool TrayPlugin::ApplyMenuItemUpdate(
     info.fMask |= MIIM_STRING;
     info.dwTypeData = text.data();
   }
-  if (location->second.checkbox &&
-      (next_sublabel.empty() != location->second.sublabel.empty() ||
-       (!next_sublabel.empty() &&
-        next_style != location->second.sublabel_style))) {
-    info.fMask |= MIIM_BITMAP;
-    info.hbmpItem =
-        next_sublabel.empty() ? nullptr : menu_icons_.Get(next_style);
+  if (location->second.checkbox) {
+    const HBITMAP bitmap =
+        next_sublabel.empty() || (info.fState & MFS_CHECKED) != 0
+            ? nullptr
+            : menu_icons_.Get(next_style);
+    if (info.hbmpItem != bitmap) {
+      info.fMask |= MIIM_BITMAP;
+      info.hbmpItem = bitmap;
+    }
   }
   if (info.fMask != 0 &&
       !::SetMenuItemInfoW(location->second.menu, location->second.position,
@@ -500,8 +504,12 @@ void TrayPlugin::RefreshMenuIcons() {
     if (item.checkbox) {
       MENUITEMINFOW info{};
       info.cbSize = sizeof(info);
+      info.fMask = MIIM_STATE;
+      if (!::GetMenuItemInfoW(item.menu, item.position, TRUE, &info)) {
+        continue;
+      }
       info.fMask = MIIM_BITMAP;
-      info.hbmpItem = item.sublabel.empty()
+      info.hbmpItem = item.sublabel.empty() || (info.fState & MFS_CHECKED) != 0
                           ? nullptr
                           : menu_icons_.Get(item.sublabel_style);
       ::SetMenuItemInfoW(item.menu, item.position, TRUE, &info);

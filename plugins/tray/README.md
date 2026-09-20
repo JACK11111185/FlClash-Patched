@@ -55,6 +55,8 @@ preserve the main label when only the sublabel changes. macOS and Windows honor
 Windows supports mouse clicks and Enter/Space activation. Its menu rows use system
 drawing, with native bitmap icons showing green (`badge`), yellow (`warning`), red
 (`destructive`) or gray (`muted`/`secondary`) status dots beside the node name.
+Checked nodes use the system checkmark in place of the status dot and retain their
+delay text; this also applies during live updates and DPI or theme changes.
 Text, checkmarks, selection backgrounds and layout follow the system menu theme.
 The icons scale with menu DPI and follow the system foreground in high-contrast
 mode. macOS uses colored badges. Linux's labels remain plain text and its menu
@@ -87,3 +89,17 @@ libraries and desktop hosts; programmatic menu opening is unsupported.
 ## Linux requirements
 
 `libayatana-appindicator3-dev`, or `libappindicator3-dev` as a fallback.
+
+## Native menu tests
+
+The Windows tests check system checkmarks versus status icons, live delay and
+selection updates, and DPI/theme refreshes against native menu state. They use
+hidden owners and do not send desktop input; rendered appearance still requires
+manual verification. Run from the repository root after Flutter has prepared its
+Windows engine:
+
+```sh
+cmake -S plugins/tray/test/native -B .dart_tool/tray_menu_tests -A x64
+cmake --build .dart_tool/tray_menu_tests --config Debug
+ctest --test-dir .dart_tool/tray_menu_tests -C Debug --output-on-failure
+```
