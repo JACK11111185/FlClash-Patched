@@ -36,6 +36,8 @@ class TrayPlugin : public flutter::Plugin {
     HMENU menu;
     UINT position;
     bool checkbox;
+    std::string label;
+    std::string sublabel;
   };
 
   void HandleMethodCall(

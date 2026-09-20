@@ -262,8 +262,8 @@ leaving a repo-wide policy as a comment reaches only the reader of that one file
   means `WM_DESTROY` never runs.
 - The `tray` plugin owns call ordering, idempotency, serialization, and unchanged-payload suppression. Application code
   declares desired state through one `Tray.show(TraySpec)` call and must not add platform branches to work around
-  ordering. Platform branches in `lib/common/tray.dart` are only for deliberate product differences (macOS speed title
-  and group submenus); query `Tray.instance.capabilities` for ability differences.
+  ordering. Platform branches in `lib/common/tray.dart` are only for deliberate product differences (macOS speed title);
+  proxy group submenus are shared across desktop platforms. Query `Tray.instance.capabilities` for ability differences.
 - Every native `show` returns whether the tray now reflects the payload, and reports `false` instead of showing a broken
   icon. `Tray` caches the payload signature only on `true`, so a rejected `show` is retried by the next update rather
   than suppressed until restart. Any test that mocks the `tray` channel must return `true` from `show`.

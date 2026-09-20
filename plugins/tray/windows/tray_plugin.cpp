@@ -107,6 +107,19 @@ std::wstring Utf16FromUtf8(const std::string& value) {
   return result;
 }
 
+std::wstring MenuText(const std::string& label, const std::string& sublabel) {
+  std::string text = label;
+  if (!sublabel.empty()) {
+    text += "\t" + sublabel;
+  }
+  size_t position = 0;
+  while ((position = text.find('&', position)) != std::string::npos) {
+    text.insert(position, 1, '&');
+    position += 2;
+  }
+  return Utf16FromUtf8(text);
+}
+
 }  // namespace
 
 // static
@@ -187,7 +200,10 @@ void TrayPlugin::RebuildMenu(HMENU menu, const flutter::EncodableList& items) {
     }
 
     const std::string* label = StringAt(*entry, "label");
-    const std::wstring text = Utf16FromUtf8(label == nullptr ? "" : *label);
+    const std::string* sublabel = StringAt(*entry, "sublabel");
+    const std::string label_text = label == nullptr ? "" : *label;
+    const std::string sublabel_text = sublabel == nullptr ? "" : *sublabel;
+    const std::wstring text = MenuText(label_text, sublabel_text);
     const UINT position = static_cast<UINT>(::GetMenuItemCount(menu));
 
     UINT flags = MF_STRING;
@@ -215,7 +231,8 @@ void TrayPlugin::RebuildMenu(HMENU menu, const flutter::EncodableList& items) {
     const std::string* key = StringAt(*entry, "key");
     if (key != nullptr) {
       menu_items_.try_emplace(
-          *key, MenuItemLocation{menu, position, *type == "checkbox"});
+          *key, MenuItemLocation{menu, position, *type == "checkbox",
+                                 label_text, sublabel_text});
     }
   }
 }
@@ -347,9 +364,10 @@ bool TrayPlugin::ApplyMenuItemUpdate(
   }
 
   const std::string* label = StringAt(arguments, "label");
+  const std::string* sublabel = StringAt(arguments, "sublabel");
   const bool* enabled = BoolPointerAt(arguments, "enabled");
   const bool* checked = BoolPointerAt(arguments, "checked");
-  if (label == nullptr && enabled == nullptr &&
+  if (label == nullptr && sublabel == nullptr && enabled == nullptr &&
       (checked == nullptr || !location->second.checkbox)) {
     return true;
   }
@@ -377,13 +395,23 @@ bool TrayPlugin::ApplyMenuItemUpdate(
   }
 
   std::wstring text;
-  if (label != nullptr) {
-    text = Utf16FromUtf8(*label);
+  if (label != nullptr || sublabel != nullptr) {
+    text = MenuText(label == nullptr ? location->second.label : *label,
+                    sublabel == nullptr ? location->second.sublabel : *sublabel);
     info.fMask |= MIIM_STRING;
     info.dwTypeData = text.data();
   }
-  return ::SetMenuItemInfoW(location->second.menu, location->second.position,
-                            TRUE, &info) != FALSE;
+  if (!::SetMenuItemInfoW(location->second.menu, location->second.position,
+                          TRUE, &info)) {
+    return false;
+  }
+  if (label != nullptr) {
+    location->second.label = *label;
+  }
+  if (sublabel != nullptr) {
+    location->second.sublabel = *sublabel;
+  }
+  return true;
 }
 
 bool TrayPlugin::UpdateMenuItems(

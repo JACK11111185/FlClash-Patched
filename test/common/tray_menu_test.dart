@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/app_localizations.dart';
@@ -21,6 +22,38 @@ import 'package:riverpod/misc.dart' show ProviderListenable;
 import 'package:tray/tray.dart';
 
 const _channel = MethodChannel('tray');
+
+class _TrayProxiesAction extends ProxiesAction {
+  final selections = <({String groupName, String proxyName})>[];
+  final testedGroups = <List<Proxy>>[];
+
+  @override
+  void build() {}
+
+  @override
+  Future<void> changeProxy({
+    required String groupName,
+    required String proxyName,
+  }) async {
+    selections.add((groupName: groupName, proxyName: proxyName));
+  }
+
+  @override
+  Future<void> delayTest(
+    List<Proxy> proxies, [
+    String? testUrl,
+    Duration uiTimeout = const Duration(seconds: 1),
+    FutureOr<void> Function(Set<String> proxyNames)? onDelayChanged,
+  ]) async {
+    testedGroups.add(proxies);
+    for (final proxy in proxies) {
+      ref
+          .read(delayDataSourceProvider.notifier)
+          .setDelay(Delay(url: testUrl!, name: proxy.name, value: 42));
+    }
+    await onDelayChanged?.call(proxies.map((proxy) => proxy.name).toSet());
+  }
+}
 
 class _FakePathProvider extends PathProviderPlatform {
   _FakePathProvider(this.root);
@@ -440,48 +473,146 @@ void main() {
     },
   );
 
-  group('a platform that is not macOS', () {
-    late AppTray windows;
+  for (final platform in [TargetPlatform.windows, TargetPlatform.linux]) {
+    group(platform.name, () {
+      const proxyGroup = Group(
+        name: 'Proxy & 自动',
+        type: GroupType.Selector,
+        now: 'A',
+        testUrl: 'https://group.test',
+        all: [
+          Proxy(name: 'A', type: 'ss'),
+          Proxy(name: 'B & 香港', type: 'ss'),
+        ],
+      );
 
-    setUp(() {
-      windows = AppTray.forPlatform(isMacOS: false, isWindows: true);
-    });
+      setUp(() {
+        debugDefaultTargetPlatformOverride = platform;
+        tray = AppTray.forPlatform(
+          isMacOS: false,
+          isWindows: platform == TargetPlatform.windows,
+        );
+      });
 
-    test('gets a plain icon, no group submenus and no speed toggle', () async {
-      await update(
-        _trayState(
+      Map<Object?, Object?> proxySubmenu() =>
+          _items(showCall()).singleWhere((item) => item['type'] == 'submenu');
+
+      Future<void> select(Map<Object?, Object?> item) async {
+        await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .handlePlatformMessage(
+              _channel.name,
+              const StandardMethodCodec().encodeMethodCall(
+                MethodCall('onMenuItemSelected', {'id': item['id']}),
+              ),
+              (_) {},
+            );
+      }
+
+      test('shows proxy groups, current selection and delay results', () async {
+        container
+            .read(delayDataSourceProvider.notifier)
+            .setDelay(
+              const Delay(url: 'https://group.test', name: 'B & 香港', value: 42),
+            );
+        await update(
+          _trayState(
+            isStart: true,
+            groups: [proxyGroup],
+            selectedMap: {proxyGroup.name: 'B & 香港'},
+          ),
+        );
+
+        final arguments = showCall()!.arguments as Map;
+        expect((arguments['icon'] as Map)['isTemplate'], isFalse);
+        final submenu = proxySubmenu();
+        expect(submenu['label'], proxyGroup.name);
+        expect(submenu['sublabel'], 'B & 香港');
+        final children = (submenu['items'] as List).cast<Map>();
+        expect(children.first['label'], currentAppLocalizations.delayTest);
+        expect(children.last['label'], 'B & 香港');
+        expect(children.last['sublabel'], '42 ms');
+        expect(children.last['checked'], isTrue);
+        expect(children[2]['checked'], isFalse);
+        expect(
+          _labels(showCall()),
+          isNot(contains(currentAppLocalizations.speedStatistics)),
+        );
+
+        await update(_trayState(groups: [proxyGroup]));
+        final refreshed = proxySubmenu();
+        expect(refreshed['sublabel'], 'A');
+        final refreshedChildren = (refreshed['items'] as List).cast<Map>();
+        expect(refreshedChildren[2]['checked'], isTrue);
+        expect(refreshedChildren.last['checked'], isFalse);
+      });
+
+      test(
+        'dispatches node selection and updates group delay results',
+        () async {
+          final action = _TrayProxiesAction();
+          container.dispose();
+          container = ProviderContainer(
+            overrides: [proxiesActionProvider.overrideWith(() => action)],
+          );
+          await update(_trayState(groups: [proxyGroup]));
+          final children = (proxySubmenu()['items'] as List).cast<Map>();
+
+          await select(children.last);
+          expect(action.selections, [
+            (groupName: proxyGroup.name, proxyName: 'B & 香港'),
+          ]);
+
+          final updatesFinished = Completer<void>();
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(_channel, (call) async {
+                calls.add(call);
+                if (call.method == 'updateMenuItems') {
+                  final updates = (call.arguments as Map)['updates'] as List;
+                  if ((updates.first as Map)['enabled'] == true) {
+                    updatesFinished.complete();
+                  }
+                }
+                return true;
+              });
+          await select(children.first);
+          await updatesFinished.future;
+
+          expect(action.testedGroups, [proxyGroup.all]);
+          final batches = calls
+              .where((call) => call.method == 'updateMenuItems')
+              .map((call) => (call.arguments as Map)['updates'] as List)
+              .toList();
+          expect((batches.first.single as Map)['enabled'], isFalse);
+          expect((batches.last.single as Map)['enabled'], isTrue);
+          final delays = batches[1].cast<Map>();
+          final groupKey = Uri.encodeComponent(proxyGroup.name);
+          expect(delays.map((item) => item['key']), [
+            for (final proxy in proxyGroup.all)
+              'delay:$groupKey:${Uri.encodeComponent(proxy.name)}',
+          ]);
+          expect(delays.map((item) => item['sublabel']), everyElement('42 ms'));
+        },
+      );
+
+      test('removes proxy submenus when groups become empty', () async {
+        await update(_trayState(groups: [proxyGroup]));
+        await update(_trayState());
+
+        expect(
+          _items(showCall()).where((item) => item['type'] == 'submenu'),
+          isEmpty,
+        );
+      });
+
+      test('never pushes a tray title', () async {
+        await tray.updateTitle(
+          showNetworkSpeed: true,
           isStart: true,
-          groups: [
-            const Group(
-              name: 'Proxy',
-              type: GroupType.Selector,
-              all: [Proxy(name: 'A', type: 'Direct')],
-            ),
-          ],
-        ),
-        on: windows,
-      );
+          traffic: const Traffic(),
+        );
 
-      final arguments = showCall()!.arguments as Map;
-      expect((arguments['icon'] as Map)['isTemplate'], isFalse);
-      expect(
-        _items(showCall()).where((item) => item['type'] == 'submenu'),
-        isEmpty,
-      );
-      expect(
-        _labels(showCall()),
-        isNot(contains(currentAppLocalizations.speedStatistics)),
-      );
+        expect(calls.where((call) => call.method == 'setTitle'), isEmpty);
+      });
     });
-
-    test('never pushes a tray title', () async {
-      await windows.updateTitle(
-        showNetworkSpeed: true,
-        isStart: true,
-        traffic: const Traffic(),
-      );
-
-      expect(calls.where((call) => call.method == 'setTitle'), isEmpty);
-    });
-  });
+  }
 }

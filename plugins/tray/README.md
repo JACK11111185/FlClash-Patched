@@ -47,6 +47,12 @@ indicator scale it; Windows loads the path as-is, so point it at a multi-size `.
 Menu item ids are assigned by pre-order position, so an unchanged menu serializes identically across
 rebuilds and click dispatch stays stable while a menu is open.
 
+Proxy group submenus are available on all three desktop platforms. Windows displays
+item sublabels in the right-hand text column; Linux appends them in parentheses so
+AppIndicator hosts can display the selected proxy and delay results. Keyed updates
+preserve the main label when only the sublabel changes. Custom views, sublabel styles
+and `keepsMenuOpen` are macOS-only; Windows and Linux close the menu after an action.
+
 ## Events
 
 `Tray.instance.events` is a broadcast stream of `TrayIconActivated`, `TrayMenuRequested` and

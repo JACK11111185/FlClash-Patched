@@ -310,7 +310,7 @@ class AppTray implements TrayPort {
           },
         ),
       const TrayMenuSeparator(),
-      if (isMacOS) ..._buildGroupMenu(trayState: trayState, read: read),
+      ..._buildGroupMenu(trayState: trayState, read: read),
       TrayMenuCheckbox(
         label: appLocalizations.tun,
         checked: trayState.tunEnable,

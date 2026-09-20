@@ -142,6 +142,32 @@ static void on_menu_item_activate(GtkMenuItem* item, gpointer user_data) {
                                   arguments, nullptr, nullptr, nullptr);
 }
 
+static void update_menu_label(GtkWidget* item, FlValue* entry) {
+  const char* label = string_value(entry, "label");
+  const char* sublabel = string_value(entry, "sublabel");
+  if (label == nullptr && sublabel == nullptr) {
+    return;
+  }
+  if (label != nullptr) {
+    g_object_set_data_full(G_OBJECT(item), "tray-menu-label", g_strdup(label),
+                           g_free);
+  }
+  if (sublabel != nullptr) {
+    g_object_set_data_full(G_OBJECT(item), "tray-menu-sublabel",
+                           g_strdup(sublabel), g_free);
+  }
+  label = static_cast<const char*>(
+      g_object_get_data(G_OBJECT(item), "tray-menu-label"));
+  sublabel = static_cast<const char*>(
+      g_object_get_data(G_OBJECT(item), "tray-menu-sublabel"));
+  g_autofree gchar* text = sublabel != nullptr && *sublabel != '\0'
+                              ? g_strdup_printf("%s  (%s)",
+                                                label == nullptr ? "" : label,
+                                                sublabel)
+                              : g_strdup(label == nullptr ? "" : label);
+  gtk_menu_item_set_label(GTK_MENU_ITEM(item), text);
+}
+
 static GtkWidget* build_menu(FlValue* items) {
   GtkWidget* menu = gtk_menu_new();
   if (items == nullptr || fl_value_get_type(items) != FL_VALUE_TYPE_LIST) {
@@ -185,6 +211,7 @@ static GtkWidget* build_menu(FlValue* items) {
     } else {
       item = gtk_menu_item_new_with_label(label);
     }
+    update_menu_label(item, entry);
 
     if (!bool_value(entry, "enabled", true)) {
       gtk_widget_set_sensitive(item, FALSE);
@@ -328,10 +355,7 @@ static bool apply_menu_item_update(TrayPlugin* self, FlValue* args) {
     return false;
   }
 
-  const char* label = string_value(args, "label");
-  if (label != nullptr) {
-    gtk_menu_item_set_label(GTK_MENU_ITEM(item), label);
-  }
+  update_menu_label(item, args);
   bool enabled = false;
   if (bool_value_if_present(args, "enabled", &enabled)) {
     gtk_widget_set_sensitive(item, enabled);
