@@ -401,6 +401,7 @@ jobs:
           yq -i '.hooks.user_defines.setup.build_assets = false | .hooks.user_defines.rust_api.build_assets = false' pubspec.yaml
 
       - name: Generate release notes
+        if: env.IS_STABLE == 'true'
         shell: bash
         env:
           TAG: ${{ github.ref_name }}
@@ -416,6 +417,9 @@ jobs:
 
       - name: Patch release.md
         run: |
+          if [[ "$IS_STABLE" != true ]]; then
+            : > release.md
+          fi
           version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
           sed "s|VERSION|$version|g" ./.github/release_template.md >> release.md
 
