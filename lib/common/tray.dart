@@ -138,7 +138,10 @@ class _TrayDelaySnapshot {
       _pending = read(pendingDelayTestsProvider),
       _defaultTestUrl = read(appSettingProvider).testUrl;
 
-  int? delayFor(String proxyName, String? testUrl) {
+  ({String proxyName, String testUrl}) targetFor(
+    String proxyName,
+    String? testUrl,
+  ) {
     final selected = _selections.putIfAbsent(
       proxyName,
       () => computeRealSelectedProxyState(
@@ -151,10 +154,15 @@ class _TrayDelaySnapshot {
       testUrl,
       _defaultTestUrl,
     ]);
-    if (_pending.contains(delayTestKey(effectiveUrl, selected.proxyName))) {
+    return (proxyName: selected.proxyName, testUrl: effectiveUrl);
+  }
+
+  int? delayFor(String proxyName, String? testUrl) {
+    final target = targetFor(proxyName, testUrl);
+    if (_pending.contains(delayTestKey(target.testUrl, target.proxyName))) {
       return 0;
     }
-    return _delays[effectiveUrl]?[selected.proxyName];
+    return _delays[target.testUrl]?[target.proxyName];
   }
 }
 
@@ -166,6 +174,7 @@ class AppTray implements TrayPort {
 
   bool _isShutDown = false;
   final Set<String> _testingGroups = {};
+  List<Group> _menuGroups = const [];
 
   AppTray._internal({required this.isMacOS, required this.isWindows});
 
@@ -404,6 +413,7 @@ class AppTray implements TrayPort {
     required TrayState trayState,
     required ProviderReader read,
   }) {
+    _menuGroups = trayState.groups;
     if (trayState.groups.isEmpty) {
       return const [];
     }
@@ -513,25 +523,33 @@ class AppTray implements TrayPort {
   ) async {
     final updates = <TrayMenuItemUpdate>[];
     final delays = _TrayDelaySnapshot(read);
-    for (final proxy in group.all.where(
-      (proxy) => proxyNames.contains(proxy.name),
-    )) {
-      final presentation = getTrayDelayPresentation(
-        delays.delayFor(proxy.name, group.testUrl),
-        loadingLabel: '...',
-        timeoutLabel: currentAppLocalizations.timeout,
-      );
-      final label = presentation.label;
-      if (label == null) {
-        continue;
+    final targets = {
+      for (final name in proxyNames) delays.targetFor(name, group.testUrl),
+    };
+    for (final menuGroup in _menuGroups) {
+      for (final proxy in menuGroup.all) {
+        if (!targets.contains(
+          delays.targetFor(proxy.name, menuGroup.testUrl),
+        )) {
+          continue;
+        }
+        final presentation = getTrayDelayPresentation(
+          delays.delayFor(proxy.name, menuGroup.testUrl),
+          loadingLabel: '...',
+          timeoutLabel: currentAppLocalizations.timeout,
+        );
+        final label = presentation.label;
+        if (label == null) {
+          continue;
+        }
+        updates.add(
+          TrayMenuItemUpdate(
+            key: _trayProxyDelayKey(menuGroup.name, proxy.name),
+            sublabel: label,
+            sublabelStyle: presentation.style,
+          ),
+        );
       }
-      updates.add(
-        TrayMenuItemUpdate(
-          key: _trayProxyDelayKey(group.name, proxy.name),
-          sublabel: label,
-          sublabelStyle: presentation.style,
-        ),
-      );
     }
     await Tray.instance.updateMenuItems(updates);
   }
