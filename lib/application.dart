@@ -14,7 +14,6 @@ import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'pages/pages.dart';
@@ -103,7 +102,6 @@ class ApplicationState extends ConsumerState<Application> {
       profilesProvider,
       (_, _) => _profileAutoUpdater.reschedule(),
     );
-    SystemNavigator.setFrameworkHandlesBack(true);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       if (globalState.navigatorKey.currentContext != null) {
         await bootstrap.attach();
@@ -190,7 +188,6 @@ class ApplicationState extends ConsumerState<Application> {
               child: MaterialApp(
                 debugShowCheckedModeBanner: false,
                 navigatorKey: globalState.navigatorKey,
-                onNavigationNotification: (_) => true,
                 localizationsDelegates: const [
                   AppLocalizations.delegate,
                   ...GlobalMaterialLocalizations.delegates,

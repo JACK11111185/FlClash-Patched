@@ -6,6 +6,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 
 typedef OnSelected = void Function(int index);
 
@@ -501,7 +502,13 @@ class _HomeBackScopeContainerState
   Widget build(BuildContext context) {
     final isMobile = ref.watch(isMobileViewProvider);
     return CommonPopScope(
-      canPop: isMobile && !_canHandlePop,
+      canPop:
+          !_canHandlePop &&
+          (defaultTargetPlatform == TargetPlatform.android
+              ? ref.watch(
+                  appSettingProvider.select((state) => state.minimizeOnExit),
+                )
+              : isMobile),
       onPop: (context) async {
         final pageLabel = ref.read(currentPageLabelProvider);
         final realContext =

@@ -20,6 +20,87 @@ import 'package:flutter_test/flutter_test.dart';
 import '../helpers/test_app.dart';
 
 void main() {
+  for (final isMobile in [true, false]) {
+    testWidgets('Android root back ownership in mobile=$isMobile layout', (
+      tester,
+    ) async {
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      final calls = <bool>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'SystemNavigator.setFrameworkHandlesBack') {
+            calls.add(call.arguments as bool);
+          }
+          return null;
+        },
+      );
+      addTearDown(() {
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        );
+      });
+      final container = ProviderContainer(
+        overrides: [isMobileViewProvider.overrideWithValue(isMobile)],
+      );
+      addTearDown(container.dispose);
+      final nestedKey = GlobalKey<NavigatorState>();
+      final guarded = ValueNotifier(false);
+      addTearDown(guarded.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: HomeBackScopeContainer(
+              child: Navigator(
+                key: nestedKey,
+                onGenerateRoute: (_) => MaterialPageRoute<void>(
+                  builder: (_) => ValueListenableBuilder(
+                    valueListenable: guarded,
+                    builder: (_, value, _) => PopScope(
+                      canPop: !value,
+                      child: const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(calls.last, isFalse);
+
+      guarded.value = true;
+      await tester.pumpAndSettle();
+      expect(calls.last, isTrue);
+      guarded.value = false;
+      await tester.pumpAndSettle();
+      expect(calls.last, isFalse);
+
+      nestedKey.currentState!.push(
+        MaterialPageRoute<void>(builder: (_) => const SizedBox.shrink()),
+      );
+      await tester.pumpAndSettle();
+      expect(calls.last, isTrue);
+      nestedKey.currentState!.pop();
+      await tester.pumpAndSettle();
+      expect(calls.last, isFalse);
+
+      container
+          .read(appSettingProvider.notifier)
+          .update((state) => state.copyWith(minimizeOnExit: false));
+      await tester.pumpAndSettle();
+      expect(calls.last, isTrue);
+      container
+          .read(appSettingProvider.notifier)
+          .update((state) => state.copyWith(minimizeOnExit: true));
+      await tester.pumpAndSettle();
+      expect(calls.last, isFalse);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+  }
+
   setUp(() {
     navigationPort = navigation;
     addTearDown(() => navigationPort = null);
