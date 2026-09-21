@@ -113,11 +113,28 @@ class _BackLayerScopeState extends State<BackLayerScope> {
       );
       _entry = entry;
       route.addLocalHistoryEntry(entry);
+      _notifyNavigation(route);
+    });
+  }
+
+  void _notifyNavigation(ModalRoute<dynamic> route) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final routeContext = route.subtreeContext;
+      if (routeContext == null || !routeContext.mounted || !route.isCurrent) {
+        return;
+      }
+      // Local history changes do not emit Flutter navigation notifications.
+      NavigationNotification(
+        canHandlePop: route.popDisposition == RoutePopDisposition.doNotPop,
+      ).dispatch(routeContext);
     });
   }
 
   void _handleRemove() {
     _entry = null;
+    if (_route case final route?) {
+      _notifyNavigation(route);
+    }
     if (!_isDetaching && mounted) {
       widget.onBack();
     }
