@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/common/shape.dart';
+import 'package:fl_clash/common/system.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,6 +14,7 @@ class CommonDialog extends ConsumerWidget {
   final bool overrideScroll;
   final Color? backgroundColor;
   final double maxWidth;
+  final bool? isTV;
 
   const CommonDialog({
     super.key,
@@ -23,23 +25,59 @@ class CommonDialog extends ConsumerWidget {
     this.overrideScroll = false,
     this.backgroundColor,
     this.maxWidth = 300,
+    this.isTV,
   });
+
+  bool _dismissInputFocus(BuildContext context) {
+    final node = FocusManager.instance.primaryFocus;
+    final focusContext = node?.context;
+    if (focusContext == null ||
+        ModalRoute.of(focusContext) != ModalRoute.of(context)) {
+      return false;
+    }
+    final isInput =
+        focusContext.widget is EditableText ||
+        focusContext.findAncestorWidgetOfExactType<EditableText>() != null ||
+        focusContext.widget is Slider ||
+        focusContext.findAncestorWidgetOfExactType<Slider>() != null;
+    final scope = node?.enclosingScope;
+    if (!isInput || scope == null) {
+      return false;
+    }
+    scope.requestScopeFocus();
+    return true;
+  }
 
   @override
   Widget build(BuildContext context, ref) {
     final size = ref.watch(viewSizeProvider);
-    return AlertDialog(
-      title: Text(title),
-      actions: actions,
-      contentPadding: padding,
-      backgroundColor: backgroundColor,
-      content: Container(
-        constraints: BoxConstraints(
-          maxHeight: min(size.height - 40, 500),
-          maxWidth: maxWidth,
+    final useTvBack = isTV ?? system.isTV;
+    return PopScope(
+      canPop: !useTvBack,
+      onPopInvokedWithResult: !useTvBack
+          ? null
+          : (didPop, _) {
+              if (didPop || ModalRoute.of(context)?.isCurrent != true) {
+                return;
+              }
+              if (_dismissInputFocus(context)) {
+                return;
+              }
+              Navigator.of(context).pop();
+            },
+      child: AlertDialog(
+        title: Text(title),
+        actions: actions,
+        contentPadding: padding,
+        backgroundColor: backgroundColor,
+        content: Container(
+          constraints: BoxConstraints(
+            maxHeight: min(size.height - 40, 500),
+            maxWidth: maxWidth,
+          ),
+          width: size.width - 40,
+          child: !overrideScroll ? SingleChildScrollView(child: child) : child,
         ),
-        width: size.width - 40,
-        child: !overrideScroll ? SingleChildScrollView(child: child) : child,
       ),
     );
   }
